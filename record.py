@@ -76,6 +76,7 @@ class RunRecorder:
 
         rounds = [item["round"] for item in self.records]
         accs = [item["accuracy"] for item in self.records]
+        n_points = len(rounds)
 
         # If accuracy is stored in [0, 1], convert it to percentage for readability.
         if accs and max(accs) <= 1.0:
@@ -85,6 +86,8 @@ class RunRecorder:
         fig.patch.set_facecolor("#E6E6E6")
         ax.set_facecolor("#E6E6E6")
 
+        marker_step = max(1, n_points // 25)
+
         ax.plot(
             rounds,
             accs,
@@ -93,6 +96,7 @@ class RunRecorder:
             markersize=5,
             markeredgecolor="#003049",
             linewidth=2.2,
+            markevery=marker_step,
             label="Model Accuracy",
         )
 
@@ -101,7 +105,21 @@ class RunRecorder:
         ax.set_xlabel("Training iteration", fontsize=16)
         ax.set_ylabel("Accuracy %", fontsize=16)
 
-        ax.set_xticks(rounds)
+        if n_points <= 25:
+            xticks = rounds
+        else:
+            tick_count = 12
+            step = max(1, n_points // (tick_count - 1))
+            xticks = [rounds[idx] for idx in range(0, n_points, step)]
+            if xticks[-1] != rounds[-1]:
+                # Avoid crowded final labels such as 199 and 200 shown together.
+                if rounds[-1] - xticks[-1] <= max(1, step // 2):
+                    xticks[-1] = rounds[-1]
+                else:
+                    xticks.append(rounds[-1])
+
+        ax.set_xticks(xticks)
+        ax.set_xlim(min(rounds), max(rounds))
         ax.tick_params(axis="both", labelsize=12)
         ax.grid(axis="y", linestyle="-", linewidth=0.8, alpha=0.45)
         ax.grid(axis="x", linestyle="-", linewidth=0.4, alpha=0.2)
