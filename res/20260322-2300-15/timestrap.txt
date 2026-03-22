@@ -1,0 +1,15 @@
+run_id=20260322-2300-15
+title=MNIST-label-FedAvg
+model_name=Net
+dataset_name=MNIST
+data_distribution=label
+strategy=FedAvg
+num_rounds=200
+local_epochs=3
+batch_size=64
+learning_rate=0.001
+fraction_evaluate=0.5
+dirichlet_alpha=0.005
+data_seed=499
+num_partitions=10
+elapsed_seconds=0.18
