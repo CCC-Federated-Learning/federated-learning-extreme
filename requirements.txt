@@ -3,3 +3,4 @@ flwr-datasets
 torch
 torchvision
 ipywidgets
+matplotlib

@@ -2,12 +2,10 @@ import torch
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 
+from config import BATCH_SIZE, DATA_DISTRIBUTION, DIRICHLET_ALPHA, LOCAL_EPOCHS, DATA_SEED
 from task import Net, load_data, train_fn, test_fn
 
 client_app = ClientApp()
-
-batch_size = 64
-local_epochs = 1
 
 @client_app.train()
 def train(msg: Message, context: Context):
@@ -22,13 +20,20 @@ def train(msg: Message, context: Context):
     # Load the data
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
-    trainloader, _ = load_data(partition_id, num_partitions, batch_size)
+    trainloader, _ = load_data(
+        partition_id,
+        num_partitions,
+        BATCH_SIZE,
+        distribution=DATA_DISTRIBUTION,
+        dirichlet_alpha=DIRICHLET_ALPHA,
+        seed=DATA_SEED,
+    )
 
     # Call the training function
     train_loss = train_fn(
         model,
         trainloader,
-        local_epochs,
+        LOCAL_EPOCHS,
         msg.content["config"]["lr"],
         device,
     )
@@ -57,8 +62,14 @@ def evaluate(msg: Message, context: Context):
     # Load the data
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
-    batch_size = 64
-    _, valloader = load_data(partition_id, num_partitions, batch_size)
+    _, valloader = load_data(
+        partition_id,
+        num_partitions,
+        BATCH_SIZE,
+        distribution=DATA_DISTRIBUTION,
+        dirichlet_alpha=DIRICHLET_ALPHA,
+        seed=DATA_SEED,
+    )
 
     # Call the evaluation function
     eval_loss, eval_acc = test_fn(
