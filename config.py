@@ -25,10 +25,10 @@ LOCAL_EPOCHS = 3
 NUM_ROUNDS = 200
 LR = 0.001
 DATASET_NAME = "MNIST"
+FRACTION_EVALUATE = 1 # merge all clients every round
 
-STRATEGY_NAME = StrategyName.FEDPROX
+STRATEGY_NAME = StrategyName.FEDAVGM
 # Strategy-specific parameters
-FRACTION_EVALUATE = 0.5     # FedAvg
 SERVER_LEARNING_RATE = 1.0  # FedAvgM
 SERVER_MOMENTUM = 0.9       # FedAvgM
 PROXIMAL_MU = 0.1           # FedProx
