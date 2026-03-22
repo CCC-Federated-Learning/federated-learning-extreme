@@ -1,0 +1,37 @@
+# Centralized strategy-specific configuration.
+# Keep only strategy hyperparameters here; global experiment settings stay in config.py.
+# You can set some values to None to fallback to config.py defaults.
+
+# FedAvgM / FedProx
+SERVER_LEARNING_RATE = 1.0
+SERVER_MOMENTUM = 0.9
+PROXIMAL_MU = 0.1
+
+# FedAdagrad / FedAdam / FedYogi
+SERVER_ETA = 0.1
+SERVER_ETA_L = 0.1
+SERVER_TAU = 0.001
+BETA_1 = 0.9
+BETA_2 = 0.99
+
+# FedTrimmedAvg
+FEDTRIMMEDAVG_BETA = 0.2
+
+# Robust aggregation
+BULYAN_NUM_MALICIOUS_NODES = 0
+KRUM_NUM_MALICIOUS_NODES = 0
+MULTIKRUM_NUM_MALICIOUS_NODES = 0
+MULTIKRUM_NUM_NODES_TO_SELECT = 1
+
+# Differential privacy
+DP_NOISE_MULTIPLIER = 0.5
+DP_CLIPPING_NORM = 1.0
+DP_NUM_SAMPLED_CLIENTS = None
+DP_INITIAL_CLIPPING_NORM = 0.1
+DP_TARGET_CLIPPED_QUANTILE = 0.5
+DP_CLIP_NORM_LR = 0.2
+DP_CLIPPED_COUNT_STDDEV = None
+
+# QFedAvg
+QFEDAVG_CLIENT_LEARNING_RATE = None
+QFEDAVG_Q = 0.1

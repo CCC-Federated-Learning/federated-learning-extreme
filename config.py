@@ -1,6 +1,31 @@
 from enum import Enum
 from pathlib import Path
 
+from strategy_config import (
+    BETA_1,
+    BETA_2,
+    BULYAN_NUM_MALICIOUS_NODES,
+    DP_CLIPPED_COUNT_STDDEV,
+    DP_CLIP_NORM_LR,
+    DP_CLIPPING_NORM,
+    DP_INITIAL_CLIPPING_NORM,
+    DP_NOISE_MULTIPLIER,
+    DP_NUM_SAMPLED_CLIENTS,
+    DP_TARGET_CLIPPED_QUANTILE,
+    FEDTRIMMEDAVG_BETA,
+    KRUM_NUM_MALICIOUS_NODES,
+    MULTIKRUM_NUM_MALICIOUS_NODES,
+    MULTIKRUM_NUM_NODES_TO_SELECT,
+    PROXIMAL_MU,
+    QFEDAVG_CLIENT_LEARNING_RATE,
+    QFEDAVG_Q,
+    SERVER_ETA,
+    SERVER_ETA_L,
+    SERVER_LEARNING_RATE,
+    SERVER_MOMENTUM,
+    SERVER_TAU,
+)
+
 
 class _ConfigEnum(str, Enum):
     def __str__(self) -> str:
@@ -8,9 +33,37 @@ class _ConfigEnum(str, Enum):
 
 
 class StrategyName(_ConfigEnum):
+    # Basic & Classic Strategies
     FEDAVG = "FedAvg"
     FEDAVGM = "FedAvgM"
     FEDPROX = "FedProx"
+
+    # Adaptive Strategies
+    FEDADAGRAD = "FedAdagrad"
+    FEDADAM = "FedAdam"
+    FEDYOGI = "FedYogi"
+    
+    # Robust Aggregation Strategies
+    BULYAN = "Bulyan"
+    KRUM = "Krum"
+    MULTIKRUM = "MultiKrum"
+    FEDMEDIAN = "FedMedian"
+    FEDTRIMMEDAVG = "FedTrimmedAvg"
+    
+    # Differential Privacy Strategies
+    DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING = "DifferentialPrivacyClientSideAdaptiveClipping"
+    DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING = "DifferentialPrivacyClientSideFixedClipping"
+    DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING = "DifferentialPrivacyServerSideAdaptiveClipping"
+    DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING = "DifferentialPrivacyServerSideFixedClipping"
+
+    # XGBoost specific strategies
+    FEDXGBBAGGING = "FedXgbBagging"
+    FEDXGBCYCLIC = "FedXgbCyclic"
+
+    # Fairness and other strategies
+    QFEDAVG = "QFedAvg"
+
+
 
 
 class DataDistribution(_ConfigEnum):
@@ -28,10 +81,13 @@ DATASET_NAME = "MNIST"
 FRACTION_EVALUATE = 1 # merge all clients every round
 
 STRATEGY_NAME = StrategyName.FEDAVGM
-# Strategy-specific parameters
-SERVER_LEARNING_RATE = 1.0  # FedAvgM
-SERVER_MOMENTUM = 0.9       # FedAvgM
-PROXIMAL_MU = 0.1           # FedProx
+
+# Strategy defaults from strategy_config.py
+# Allow None in strategy file to fallback to global defaults here.
+if DP_NUM_SAMPLED_CLIENTS is None:
+    DP_NUM_SAMPLED_CLIENTS = NUM_PARTITIONS
+if QFEDAVG_CLIENT_LEARNING_RATE is None:
+    QFEDAVG_CLIENT_LEARNING_RATE = LR
 
 # Data partition settings
 DATA_DISTRIBUTION = DataDistribution.LABEL 
@@ -71,6 +127,44 @@ def validate_config() -> None:
         raise ValueError("SERVER_MOMENTUM must be >= 0")
     if PROXIMAL_MU < 0:
         raise ValueError("PROXIMAL_MU must be >= 0")
+    if SERVER_ETA <= 0:
+        raise ValueError("SERVER_ETA must be > 0")
+    if SERVER_ETA_L <= 0:
+        raise ValueError("SERVER_ETA_L must be > 0")
+    if SERVER_TAU <= 0:
+        raise ValueError("SERVER_TAU must be > 0")
+    if not (0 < BETA_1 < 1):
+        raise ValueError("BETA_1 must be in (0, 1)")
+    if not (0 < BETA_2 < 1):
+        raise ValueError("BETA_2 must be in (0, 1)")
+    if not (0 <= FEDTRIMMEDAVG_BETA < 0.5):
+        raise ValueError("FEDTRIMMEDAVG_BETA must be in [0, 0.5)")
+    if BULYAN_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("BULYAN_NUM_MALICIOUS_NODES must be >= 0")
+    if KRUM_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("KRUM_NUM_MALICIOUS_NODES must be >= 0")
+    if MULTIKRUM_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("MULTIKRUM_NUM_MALICIOUS_NODES must be >= 0")
+    if MULTIKRUM_NUM_NODES_TO_SELECT <= 0:
+        raise ValueError("MULTIKRUM_NUM_NODES_TO_SELECT must be > 0")
+    if DP_NOISE_MULTIPLIER < 0:
+        raise ValueError("DP_NOISE_MULTIPLIER must be >= 0")
+    if DP_CLIPPING_NORM <= 0:
+        raise ValueError("DP_CLIPPING_NORM must be > 0")
+    if DP_NUM_SAMPLED_CLIENTS <= 0:
+        raise ValueError("DP_NUM_SAMPLED_CLIENTS must be > 0")
+    if DP_INITIAL_CLIPPING_NORM <= 0:
+        raise ValueError("DP_INITIAL_CLIPPING_NORM must be > 0")
+    if not (0 <= DP_TARGET_CLIPPED_QUANTILE <= 1):
+        raise ValueError("DP_TARGET_CLIPPED_QUANTILE must be in [0, 1]")
+    if DP_CLIP_NORM_LR <= 0:
+        raise ValueError("DP_CLIP_NORM_LR must be > 0")
+    if DP_CLIPPED_COUNT_STDDEV is not None and DP_CLIPPED_COUNT_STDDEV < 0:
+        raise ValueError("DP_CLIPPED_COUNT_STDDEV must be >= 0 when provided")
+    if QFEDAVG_CLIENT_LEARNING_RATE <= 0:
+        raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be > 0")
+    if QFEDAVG_Q < 0:
+        raise ValueError("QFEDAVG_Q must be >= 0")
     distribution_values = {item.value.lower() for item in DataDistribution}
     if DATA_DISTRIBUTION.lower() not in distribution_values:
         supported = ", ".join(item.value for item in DataDistribution)
