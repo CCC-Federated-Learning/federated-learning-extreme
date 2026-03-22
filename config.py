@@ -80,7 +80,7 @@ LR = 0.001
 DATASET_NAME = "MNIST"
 FRACTION_EVALUATE = 1 # merge all clients every round
 
-STRATEGY_NAME = StrategyName.FEDAVGM
+STRATEGY_NAME = StrategyName.BULYAN
 
 # Strategy defaults from strategy_config.py
 # Allow None in strategy file to fallback to global defaults here.

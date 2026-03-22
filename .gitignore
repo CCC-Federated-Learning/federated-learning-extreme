@@ -2,3 +2,5 @@
 /__pycache__
 /data
 /final_model.pt
+/strategy.py/__pycache__
+/.vscode
