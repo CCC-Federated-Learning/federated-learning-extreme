@@ -1,22 +1,42 @@
+from enum import Enum
 from pathlib import Path
+
+
+class _ConfigEnum(str, Enum):
+    def __str__(self) -> str:
+        return self.value
+
+
+class StrategyName(_ConfigEnum):
+    FEDAVG = "FedAvg"
+    FEDAVGM = "FedAvgM"
+    FEDPROX = "FedProx"
+
+
+class DataDistribution(_ConfigEnum):
+    IID = "IID"
+    DIRICHLET = "Dirichlet"
+    LABEL = "label"
 
 # Global experiment settings
 NUM_PARTITIONS = 10
 BATCH_SIZE = 64
 LOCAL_EPOCHS = 3
-LR = 0.001
 NUM_ROUNDS = 200
-FRACTION_EVALUATE = 0.5
-STRATEGY_NAME = "FedAvg"  # options: "FedAvg"
-
-# Data partition settings
-# three options: "IID", "Dirichlet", "label"
+LR = 0.001
 DATASET_NAME = "MNIST"
 
-# DATA_DISTRIBUTION = "IID"
-# DATA_DISTRIBUTION = "Dirichlet"
-DATA_DISTRIBUTION = "label"
-DIRICHLET_ALPHA = 0.005
+STRATEGY_NAME = StrategyName.FEDPROX
+# Strategy-specific parameters
+FRACTION_EVALUATE = 0.5     # FedAvg
+SERVER_LEARNING_RATE = 1.0  # FedAvgM
+SERVER_MOMENTUM = 0.9       # FedAvgM
+PROXIMAL_MU = 0.1           # FedProx
+
+# Data partition settings
+DATA_DISTRIBUTION = DataDistribution.LABEL 
+# Data distribution options:
+DIRICHLET_ALPHA = 0.5     # Dirichlet parameter (small = Non-IID)
 DATA_SEED = 499 
 
 # Runtime settings
@@ -30,7 +50,6 @@ DRAW_SHOW_PLOT = True
 DRAW_FIGSIZE = (8.28, 4.49)
 
 # Run record settings
-ACC_CHART_DIR = "accchart"
 RES_DIR = "res"
 
 # File naming settings
@@ -42,10 +61,20 @@ def get_draw_output_path() -> Path:
 
 
 def validate_config() -> None:
-    if STRATEGY_NAME.lower() not in {"fedavg"}:
-        raise ValueError("STRATEGY_NAME must be one of: fedavg")
-    if DATA_DISTRIBUTION.lower() not in {"iid", "dirichlet", "label"}:
-        raise ValueError("DATA_DISTRIBUTION must be one of: iid, dirichlet, label")
+    strategy_values = {item.value for item in StrategyName}
+    if STRATEGY_NAME not in strategy_values:
+        supported = ", ".join(item.value for item in StrategyName)
+        raise ValueError(f"STRATEGY_NAME must be one of: {supported}")
+    if SERVER_LEARNING_RATE <= 0:
+        raise ValueError("SERVER_LEARNING_RATE must be > 0")
+    if SERVER_MOMENTUM < 0:
+        raise ValueError("SERVER_MOMENTUM must be >= 0")
+    if PROXIMAL_MU < 0:
+        raise ValueError("PROXIMAL_MU must be >= 0")
+    distribution_values = {item.value.lower() for item in DataDistribution}
+    if DATA_DISTRIBUTION.lower() not in distribution_values:
+        supported = ", ".join(item.value for item in DataDistribution)
+        raise ValueError(f"DATA_DISTRIBUTION must be one of: {supported}")
     if DIRICHLET_ALPHA <= 0:
         raise ValueError("DIRICHLET_ALPHA must be > 0")
     if NUM_PARTITIONS <= 0:

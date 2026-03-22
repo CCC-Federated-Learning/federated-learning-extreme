@@ -1,21 +1,15 @@
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
-from flwr.serverapp.strategy import FedAvg
 
-from config import FRACTION_EVALUATE, LR, NUM_ROUNDS, STRATEGY_NAME
+from config import LR, NUM_ROUNDS
 from record import RunRecorder
+from strategies.factory import build_strategy
 from task import Net, load_centralized_dataset, test_fn
 
 
 server_app = ServerApp()
 recorder = RunRecorder()
-
-
-def build_strategy():
-    if STRATEGY_NAME.lower() == "fedavg":
-        return FedAvg(fraction_evaluate=FRACTION_EVALUATE)
-    raise ValueError(f"Unsupported STRATEGY_NAME: {STRATEGY_NAME}")
 
 @server_app.main()
 def main(grid: Grid, context: Context) -> None:

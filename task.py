@@ -165,7 +165,15 @@ def load_centralized_dataset():
     return DataLoader(test_dataset, batch_size=128)
 
 
-def train_fn(net, trainloader, epochs, lr, device):
+def train_fn(
+    net,
+    trainloader,
+    epochs,
+    lr,
+    device,
+    proximal_mu: float = 0.0,
+    global_params=None,
+):
     """Train the model on the training set."""
     if len(trainloader) == 0:
         return 0.0
@@ -180,6 +188,13 @@ def train_fn(net, trainloader, epochs, lr, device):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             loss = criterion(net(images), labels)
+
+            if proximal_mu > 0 and global_params is not None:
+                prox_term = 0.0
+                for param, global_param in zip(net.parameters(), global_params):
+                    prox_term += torch.sum((param - global_param) ** 2)
+                loss = loss + 0.5 * proximal_mu * prox_term
+
             loss.backward()
             optimizer.step()
             running_loss += loss.item()

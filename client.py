@@ -29,13 +29,23 @@ def train(msg: Message, context: Context):
         seed=DATA_SEED,
     )
 
+    config = msg.content["config"]
+    proximal_mu = float(config.get("proximal-mu", 0.0))
+    global_params = (
+        [param.detach().clone() for param in model.parameters()]
+        if proximal_mu > 0
+        else None
+    )
+
     # Call the training function
     train_loss = train_fn(
         model,
         trainloader,
         LOCAL_EPOCHS,
-        msg.content["config"]["lr"],
+        config["lr"],
         device,
+        proximal_mu=proximal_mu,
+        global_params=global_params,
     )
 
     # Construct and return reply Message
