@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets
 from torchvision.transforms import Compose, Normalize, ToTensor
@@ -30,6 +31,7 @@ pytorch_transforms = Compose([ToTensor(), Normalize((0.1307,), (0.3081,))])
 
 _cached_train = None
 _cached_test = None
+_partition_cache = {"train": {}, "test": {}}
 
 
 def _get_datasets():
@@ -45,13 +47,103 @@ def _get_datasets():
     return _cached_train, _cached_test
 
 
-def load_data(partition_id: int, num_partitions: int, batch_size: int):
-    """Load partition MNIST data — each client only gets samples of its own label."""
-    train_dataset, test_dataset = _get_datasets()
+def _build_partition_indices(
+    targets: torch.Tensor,
+    num_partitions: int,
+    distribution: str,
+    dirichlet_alpha: float,
+    seed: int,
+):
+    """Build sample indices for each client partition."""
+    if distribution == "label":
+        return [
+            (targets == (partition_idx % 10)).nonzero(as_tuple=True)[0].tolist()
+            for partition_idx in range(num_partitions)
+        ]
 
-    # Filter by label: each client only gets samples matching its partition_id
-    train_indices = (train_dataset.targets == partition_id).nonzero(as_tuple=True)[0].tolist()
-    test_indices = (test_dataset.targets == partition_id).nonzero(as_tuple=True)[0].tolist()
+    rng = np.random.default_rng(seed)
+    all_indices = np.arange(len(targets))
+
+    if distribution == "iid":
+        rng.shuffle(all_indices)
+        return [indices.tolist() for indices in np.array_split(all_indices, num_partitions)]
+
+    if distribution == "dirichlet":
+        if dirichlet_alpha <= 0:
+            raise ValueError("dirichlet_alpha must be > 0 when using dirichlet distribution")
+
+        targets_np = targets.cpu().numpy()
+        client_indices = [[] for _ in range(num_partitions)]
+
+        for label in np.unique(targets_np):
+            label_indices = np.where(targets_np == label)[0]
+            rng.shuffle(label_indices)
+
+            proportions = rng.dirichlet(np.full(num_partitions, dirichlet_alpha))
+            split_points = (np.cumsum(proportions) * len(label_indices)).astype(int)[:-1]
+            splits = np.split(label_indices, split_points)
+
+            for partition_idx, split in enumerate(splits):
+                client_indices[partition_idx].extend(split.tolist())
+
+        for partition_idx in range(num_partitions):
+            rng.shuffle(client_indices[partition_idx])
+
+        return client_indices
+
+    raise ValueError(
+        "distribution must be one of: 'iid', 'dirichlet', or 'label'"
+    )
+
+
+def load_data(
+    partition_id: int,
+    num_partitions: int,
+    batch_size: int,
+    distribution: str = "iid",
+    dirichlet_alpha: float = 0.5,
+    seed: int = 42,
+):
+    """Load partitioned MNIST data with Flower-style data distributions.
+
+    distribution options:
+    - "iid": random even split across clients (Flower common baseline)
+    - "dirichlet": non-IID split controlled by dirichlet_alpha
+    - "label": legacy mode, each client mainly maps to one label
+    """
+    train_dataset, test_dataset = _get_datasets()
+    distribution = distribution.lower()
+
+    train_cache_key = (distribution, num_partitions, dirichlet_alpha, seed)
+    test_cache_key = (distribution, num_partitions, dirichlet_alpha, seed)
+
+    if train_cache_key not in _partition_cache["train"]:
+        _partition_cache["train"][train_cache_key] = _build_partition_indices(
+            train_dataset.targets,
+            num_partitions,
+            distribution,
+            dirichlet_alpha,
+            seed,
+        )
+    if test_cache_key not in _partition_cache["test"]:
+        _partition_cache["test"][test_cache_key] = _build_partition_indices(
+            test_dataset.targets,
+            num_partitions,
+            distribution,
+            dirichlet_alpha,
+            seed,
+        )
+
+    train_partitions = _partition_cache["train"][train_cache_key]
+    test_partitions = _partition_cache["test"][test_cache_key]
+
+    if partition_id < 0 or partition_id >= num_partitions:
+        raise ValueError(
+            f"partition_id {partition_id} is out of range for num_partitions={num_partitions}"
+        )
+
+    train_indices = train_partitions[partition_id]
+    test_indices = test_partitions[partition_id]
 
     trainloader = DataLoader(
         Subset(train_dataset, train_indices), batch_size=batch_size, shuffle=True

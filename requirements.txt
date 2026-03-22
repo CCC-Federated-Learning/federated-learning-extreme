@@ -1,5 +1,6 @@
-lwr[simulation]
+flwr[simulation]
 flwr-datasets
 torch
 torchvision
 ipywidgets
+matplotlib

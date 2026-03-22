@@ -3,14 +3,11 @@ from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
+from config import FRACTION_EVALUATE, LR, NUM_ROUNDS
 from task import Net, load_centralized_dataset, test_fn
 
 
 server_app = ServerApp()
-
-fraction_evaluate: float = 0.5
-num_rounds: int = 7
-lr: float = 0.01
 
 @server_app.main()
 def main(grid: Grid, context: Context) -> None:
@@ -20,14 +17,14 @@ def main(grid: Grid, context: Context) -> None:
     arrays = ArrayRecord(global_model.state_dict())
 
     # 初始化聚合策略
-    strategy = FedAvg(fraction_evaluate=fraction_evaluate)
+    strategy = FedAvg(fraction_evaluate=FRACTION_EVALUATE)
 
     # 開始執行策略 跑 num_rounds 次
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,
-        train_config=ConfigRecord({"lr": lr}),
-        num_rounds=num_rounds,
+        train_config=ConfigRecord({"lr": LR}),
+        num_rounds=NUM_ROUNDS,
         evaluate_fn=global_evaluate,
     )
 
