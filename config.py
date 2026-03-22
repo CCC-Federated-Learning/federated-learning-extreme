@@ -2,10 +2,10 @@ from pathlib import Path
 
 # Global experiment settings
 NUM_PARTITIONS = 10
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 LOCAL_EPOCHS = 3
 LR = 0.001
-NUM_ROUNDS = 10
+NUM_ROUNDS = 200
 FRACTION_EVALUATE = 0.5
 STRATEGY_NAME = "FedAvg"  # options: "FedAvg"
 
