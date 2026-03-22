@@ -1,0 +1,5 @@
+lwr[simulation]
+flwr-datasets
+torch
+torchvision
+ipywidgets
