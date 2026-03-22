@@ -11,8 +11,16 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from config import (
+    BATCH_SIZE,
     DATASET_NAME,
     DATA_DISTRIBUTION,
+    DATA_SEED,
+    DIRICHLET_ALPHA,
+    FRACTION_EVALUATE,
+    LOCAL_EPOCHS,
+    LR,
+    NUM_PARTITIONS,
+    NUM_ROUNDS,
     RES_DIR,
     STRATEGY_NAME,
     TIMESTAMP_FORMAT,
@@ -28,6 +36,7 @@ class RunRecorder:
         self.run_id = ""
         self.records = []
         self.start_perf = None
+        self.model_name = "Net"
 
     def start(self) -> None:
         self.run_id = datetime.now().strftime(TIMESTAMP_FORMAT)
@@ -67,6 +76,7 @@ class RunRecorder:
 
         rounds = [item["round"] for item in self.records]
         accs = [item["accuracy"] for item in self.records]
+        n_points = len(rounds)
 
         # If accuracy is stored in [0, 1], convert it to percentage for readability.
         if accs and max(accs) <= 1.0:
@@ -76,6 +86,8 @@ class RunRecorder:
         fig.patch.set_facecolor("#E6E6E6")
         ax.set_facecolor("#E6E6E6")
 
+        marker_step = max(1, n_points // 25)
+
         ax.plot(
             rounds,
             accs,
@@ -84,6 +96,7 @@ class RunRecorder:
             markersize=5,
             markeredgecolor="#003049",
             linewidth=2.2,
+            markevery=marker_step,
             label="Model Accuracy",
         )
 
@@ -92,7 +105,21 @@ class RunRecorder:
         ax.set_xlabel("Training iteration", fontsize=16)
         ax.set_ylabel("Accuracy %", fontsize=16)
 
-        ax.set_xticks(rounds)
+        if n_points <= 25:
+            xticks = rounds
+        else:
+            tick_count = 12
+            step = max(1, n_points // (tick_count - 1))
+            xticks = [rounds[idx] for idx in range(0, n_points, step)]
+            if xticks[-1] != rounds[-1]:
+                # Avoid crowded final labels such as 199 and 200 shown together.
+                if rounds[-1] - xticks[-1] <= max(1, step // 2):
+                    xticks[-1] = rounds[-1]
+                else:
+                    xticks.append(rounds[-1])
+
+        ax.set_xticks(xticks)
+        ax.set_xlim(min(rounds), max(rounds))
         ax.tick_params(axis="both", labelsize=12)
         ax.grid(axis="y", linestyle="-", linewidth=0.8, alpha=0.45)
         ax.grid(axis="x", linestyle="-", linewidth=0.4, alpha=0.2)
@@ -109,18 +136,35 @@ class RunRecorder:
 
         return chart_path
 
-    def _save_elapsed_time_file(self) -> Path:
+    def _get_elapsed_seconds(self) -> float:
         elapsed_seconds = 0.0
         if self.start_perf is not None:
             elapsed_seconds = time.perf_counter() - self.start_perf
+        return elapsed_seconds
 
-        elapsed_filename = f"{elapsed_seconds:.2f}s.txt"
-        elapsed_path = self.experiment_dir / elapsed_filename
-        elapsed_path.write_text(
-            f"elapsed_seconds={elapsed_seconds:.2f}\n",
-            encoding="utf-8",
+    def _save_metadata_file(self) -> Path:
+        elapsed_seconds = self._get_elapsed_seconds()
+        metadata_path = self.experiment_dir / "metadata.txt"
+
+        content = (
+            f"run_id = {self.run_id}\n"
+            f"title = {DATASET_NAME}-{DATA_DISTRIBUTION}-{STRATEGY_NAME}\n"
+            f"model_name = {self.model_name}\n"
+            f"dataset_name = {DATASET_NAME}\n"
+            f"data_distribution = {DATA_DISTRIBUTION}\n"
+            f"strategy = {STRATEGY_NAME}\n"
+            f"num_rounds = {NUM_ROUNDS}\n"
+            f"local_epochs = {LOCAL_EPOCHS}\n"
+            f"batch_size = {BATCH_SIZE}\n"
+            f"learning_rate = {LR}\n"
+            f"fraction_evaluate = {FRACTION_EVALUATE}\n"
+            f"dirichlet_alpha = {DIRICHLET_ALPHA}\n"
+            f"data_seed = {DATA_SEED}\n"
+            f"num_partitions = {NUM_PARTITIONS}\n"
+            f"elapsed_seconds = {elapsed_seconds:.2f}\n"
         )
-        return elapsed_path
+        metadata_path.write_text(content, encoding="utf-8")
+        return metadata_path
 
     def finalize(self):
         if not self.records:
@@ -130,11 +174,11 @@ class RunRecorder:
         json_path = self._save_json()
         csv_path = self._save_csv()
         chart_path = self._save_acc_chart()
-        elapsed_path = self._save_elapsed_time_file()
+        metadata_path = self._save_metadata_file()
 
         print(f"Saved run records to: {json_path.resolve()}")
         print(f"Saved run records to: {csv_path.resolve()}")
         print(f"Saved acc chart to: {chart_path.resolve()}")
-        print(f"Saved elapsed-time file to: {elapsed_path.resolve()}")
+        print(f"Saved run info to: {metadata_path.resolve()}")
 
-        return json_path, csv_path, chart_path, elapsed_path
+        return json_path, csv_path, chart_path, metadata_path
