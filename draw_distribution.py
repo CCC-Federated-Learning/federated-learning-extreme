@@ -5,6 +5,7 @@ from datetime import datetime
 
 from config import (
     BATCH_SIZE,
+    DATASET_NAME,
     DATA_DISTRIBUTION,
     DIRICHLET_ALPHA,
     DATA_SEED,
@@ -13,11 +14,14 @@ from config import (
     DRAW_SAVE_NAME,
     DRAW_SHOW_PLOT,
     NUM_PARTITIONS,
+    STRATEGY_NAME,
+    TIMESTAMP_FORMAT,
 )
 from task import load_data
 
 
 def plot_client_distribution(
+    dataset_name=DATASET_NAME,
     num_partitions=NUM_PARTITIONS,
     batch_size=BATCH_SIZE,
     distribution=DATA_DISTRIBUTION,
@@ -26,6 +30,8 @@ def plot_client_distribution(
     save_dir=DRAW_SAVE_DIR,
     save_name=DRAW_SAVE_NAME,
     show_plot=DRAW_SHOW_PLOT,
+    add_timestamp=True,
+    strategy_name=STRATEGY_NAME,
 ):
     """Plot each client's label distribution as a stacked bar chart."""
     effective_seed = (
@@ -84,7 +90,7 @@ def plot_client_distribution(
         )
         bottom += values
 
-    ax.set_title("Data Distribution across Clients")
+    ax.set_title(f"{dataset_name}-{distribution}-{strategy_name}")
     ax.set_xlabel("Client")
     ax.set_ylabel("Number of Samples")
     ax.tick_params(axis="x", labelrotation=90)
@@ -94,8 +100,11 @@ def plot_client_distribution(
     output_dir = Path(save_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     save_name_path = Path(save_name)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_name = f"{save_name_path.stem}_{timestamp}{save_name_path.suffix or '.png'}"
+    if add_timestamp:
+        timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
+        output_name = f"{save_name_path.stem}_{timestamp}{save_name_path.suffix or '.png'}"
+    else:
+        output_name = f"{save_name_path.stem}{save_name_path.suffix or '.png'}"
     output_path = output_dir / output_name
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Data split seed used: {effective_seed}")

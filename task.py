@@ -55,6 +55,8 @@ def _build_partition_indices(
     seed: int,
 ):
     """Build sample indices for each client partition."""
+    distribution = distribution.lower()
+
     if distribution == "label":
         return [
             (targets == (partition_idx % 10)).nonzero(as_tuple=True)[0].tolist()
@@ -145,8 +147,11 @@ def load_data(
     train_indices = train_partitions[partition_id]
     test_indices = test_partitions[partition_id]
 
+    # RandomSampler (shuffle=True) cannot be built on an empty dataset.
+    train_shuffle = len(train_indices) > 0
+
     trainloader = DataLoader(
-        Subset(train_dataset, train_indices), batch_size=batch_size, shuffle=True
+        Subset(train_dataset, train_indices), batch_size=batch_size, shuffle=train_shuffle
     )
     testloader = DataLoader(
         Subset(test_dataset, test_indices), batch_size=batch_size
@@ -162,6 +167,9 @@ def load_centralized_dataset():
 
 def train_fn(net, trainloader, epochs, lr, device):
     """Train the model on the training set."""
+    if len(trainloader) == 0:
+        return 0.0
+
     net.to(device)
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
@@ -181,6 +189,9 @@ def train_fn(net, trainloader, epochs, lr, device):
 
 def test_fn(net, testloader, device):
     """Validate the model on the test set."""
+    if len(testloader) == 0 or len(testloader.dataset) == 0:
+        return 0.0, 0.0
+
     net.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     correct, loss = 0, 0.0

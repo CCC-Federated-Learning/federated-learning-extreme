@@ -3,21 +3,31 @@ from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
-from config import FRACTION_EVALUATE, LR, NUM_ROUNDS
+from config import FRACTION_EVALUATE, LR, NUM_ROUNDS, STRATEGY_NAME
+from record import RunRecorder
 from task import Net, load_centralized_dataset, test_fn
 
 
 server_app = ServerApp()
+recorder = RunRecorder()
+
+
+def build_strategy():
+    if STRATEGY_NAME.lower() == "fedavg":
+        return FedAvg(fraction_evaluate=FRACTION_EVALUATE)
+    raise ValueError(f"Unsupported STRATEGY_NAME: {STRATEGY_NAME}")
 
 @server_app.main()
 def main(grid: Grid, context: Context) -> None:
     """Main entry point for the ServerApp."""
+    recorder.start()
+
     # 初始化模型
     global_model = Net()
     arrays = ArrayRecord(global_model.state_dict())
 
     # 初始化聚合策略
-    strategy = FedAvg(fraction_evaluate=FRACTION_EVALUATE)
+    strategy = build_strategy()
 
     # 開始執行策略 跑 num_rounds 次
     result = strategy.start(
@@ -32,6 +42,7 @@ def main(grid: Grid, context: Context) -> None:
     print("\nSaving final model to disk...")
     state_dict = result.arrays.to_torch_state_dict()
     torch.save(state_dict, "final_model.pt")
+    recorder.finalize()
 
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
@@ -48,6 +59,7 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
 
     # Evaluate the global model on the test set
     test_loss, test_acc = test_fn(model, test_dataloader, device)
+    recorder.record_round(server_round, test_acc, test_loss)
 
     # Return the evaluation metrics
     return MetricRecord({"accuracy": test_acc, "loss": test_loss})
