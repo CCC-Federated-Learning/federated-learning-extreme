@@ -31,7 +31,6 @@ class _ConfigEnum(str, Enum):
     def __str__(self) -> str:
         return self.value
 
-
 class StrategyName(_ConfigEnum):
     # Basic & Classic Strategies
     FEDAVG = "FedAvg"
@@ -63,13 +62,11 @@ class StrategyName(_ConfigEnum):
     # Fairness and other strategies
     QFEDAVG = "QFedAvg"
 
-
-
-
 class DataDistribution(_ConfigEnum):
     IID = "IID"
     DIRICHLET = "Dirichlet"
     LABEL = "label"
+
 
 # Global experiment settings
 NUM_PARTITIONS = 10
