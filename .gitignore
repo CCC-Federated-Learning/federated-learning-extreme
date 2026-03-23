@@ -4,3 +4,4 @@
 /final_model.pt
 /strategy.py/__pycache__
 /.vscode
+/final_model_xgb.json
