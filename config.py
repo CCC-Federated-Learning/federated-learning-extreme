@@ -78,10 +78,11 @@ LOCAL_EPOCHS = 3
 NUM_ROUNDS = 200
 LR = 0.001
 DATASET_NAME = "MNIST"
-FRACTION_EVALUATE = 1 # merge all clients every round
+FRACTION_TRAIN = 1.0  # train on all clients every round
+FRACTION_EVALUATE = 1 # test all clients every round
 
 #在這裡改策略
-STRATEGY_NAME = StrategyName.BULYAN 
+STRATEGY_NAME = StrategyName.FEDTRIMMEDAVG
 
 # Strategy defaults from strategy_config.py
 # Allow None in strategy file to fallback to global defaults here.
@@ -176,3 +177,7 @@ def validate_config() -> None:
         raise ValueError("NUM_PARTITIONS must be > 0")
     if BATCH_SIZE <= 0:
         raise ValueError("BATCH_SIZE must be > 0")
+    if not (0 < FRACTION_TRAIN <= 1):
+        raise ValueError("FRACTION_TRAIN must be in (0, 1]")
+    if not (0 <= FRACTION_EVALUATE <= 1):
+        raise ValueError("FRACTION_EVALUATE must be in [0, 1]")

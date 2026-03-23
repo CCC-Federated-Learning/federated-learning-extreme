@@ -1,6 +1,6 @@
 from flwr.serverapp.strategy import QFedAvg
 
-from config import FRACTION_EVALUATE, QFEDAVG_CLIENT_LEARNING_RATE, QFEDAVG_Q
+from config import FRACTION_EVALUATE, FRACTION_TRAIN, QFEDAVG_CLIENT_LEARNING_RATE, QFEDAVG_Q
 
 
 def build_qfedavg():
@@ -8,5 +8,6 @@ def build_qfedavg():
     return QFedAvg(
         client_learning_rate=QFEDAVG_CLIENT_LEARNING_RATE,
         q=QFEDAVG_Q,
+        fraction_train=FRACTION_TRAIN,
         fraction_evaluate=FRACTION_EVALUATE,
     )
