@@ -1,0 +1,15 @@
+======================================================================
+SECOND-STATION RESULTS SUMMARY
+======================================================================
+
+Directory: IID-label-Round-20-Epoch-1-20260324-2043-57
+
+Configuration:
+  Data Distribution: IID-label
+  Training Rounds: 20
+  Local Epochs: 1
+  Run ID: 20260324-2043-57
+
+Contents:
+  - PUT-DATA-THERE/: Raw experimental data
+  - generate_charts/: Generated comparison charts and visualizations
