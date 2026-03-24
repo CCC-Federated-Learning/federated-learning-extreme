@@ -1,3 +1,6 @@
+import math
+
+
 def _resolve_strategy_name(cfg):
     """Resolve and validate strategy name."""
     strategy = cfg.STRATEGY_NAME
@@ -62,6 +65,15 @@ def _validate_dp(cfg) -> None:
         raise ValueError("DP_CLIPPING_NORM must be > 0")
     if cfg.DP_NUM_SAMPLED_CLIENTS <= 0:
         raise ValueError("DP_NUM_SAMPLED_CLIENTS must be > 0")
+
+    n = _estimated_train_nodes(cfg)
+    if cfg.DP_NUM_SAMPLED_CLIENTS > n:
+        raise ValueError(
+            "DP_NUM_SAMPLED_CLIENTS cannot exceed expected sampled train nodes per round. "
+            f"Got DP_NUM_SAMPLED_CLIENTS={cfg.DP_NUM_SAMPLED_CLIENTS}, estimated n={n}. "
+            "Increase FRACTION_TRAIN/NUM_PARTITIONS or reduce DP_NUM_SAMPLED_CLIENTS."
+        )
+
     if cfg.DP_INITIAL_CLIPPING_NORM <= 0:
         raise ValueError("DP_INITIAL_CLIPPING_NORM must be > 0")
     if not (0 <= cfg.DP_TARGET_CLIPPED_QUANTILE <= 1):
@@ -136,16 +148,39 @@ def _validate_fedtrimmedavg(cfg) -> None:
         raise ValueError("FEDTRIMMEDAVG_BETA must be in [0, 0.5)")
 
 
+def _estimated_train_nodes(cfg) -> int:
+    """Estimate per-round sampled train nodes under current sampling settings."""
+    return max(2, int(cfg.NUM_PARTITIONS * cfg.FRACTION_TRAIN))
+
+
 def _validate_bulyan(cfg) -> None:
     """Validate Bulyan (robust aggregation) parameters."""
     if cfg.BULYAN_NUM_MALICIOUS_NODES < 0:
         raise ValueError("BULYAN_NUM_MALICIOUS_NODES must be >= 0")
+
+    n = _estimated_train_nodes(cfg)
+    f = cfg.BULYAN_NUM_MALICIOUS_NODES
+    if n < 4 * f + 3:
+        raise ValueError(
+            "Bulyan requires sampled train nodes n >= 4f + 3. "
+            f"Current estimate: n={n}, f={f}. "
+            "Increase FRACTION_TRAIN/NUM_PARTITIONS or reduce BULYAN_NUM_MALICIOUS_NODES."
+        )
 
 
 def _validate_krum(cfg) -> None:
     """Validate Krum (robust aggregation) parameters."""
     if cfg.KRUM_NUM_MALICIOUS_NODES < 0:
         raise ValueError("KRUM_NUM_MALICIOUS_NODES must be >= 0")
+
+    n = _estimated_train_nodes(cfg)
+    f = cfg.KRUM_NUM_MALICIOUS_NODES
+    if n < 2 * f + 3:
+        raise ValueError(
+            "Krum requires sampled train nodes n >= 2f + 3. "
+            f"Current estimate: n={n}, f={f}. "
+            "Increase FRACTION_TRAIN/NUM_PARTITIONS or reduce KRUM_NUM_MALICIOUS_NODES."
+        )
 
 
 def _validate_multikrum(cfg) -> None:
@@ -155,11 +190,34 @@ def _validate_multikrum(cfg) -> None:
     if cfg.MULTIKRUM_NUM_NODES_TO_SELECT <= 0:
         raise ValueError("MULTIKRUM_NUM_NODES_TO_SELECT must be > 0")
 
+    n = _estimated_train_nodes(cfg)
+    f = cfg.MULTIKRUM_NUM_MALICIOUS_NODES
+    m = cfg.MULTIKRUM_NUM_NODES_TO_SELECT
+
+    if n < 2 * f + 3:
+        raise ValueError(
+            "MultiKrum requires sampled train nodes n >= 2f + 3. "
+            f"Current estimate: n={n}, f={f}. "
+            "Increase FRACTION_TRAIN/NUM_PARTITIONS or reduce MULTIKRUM_NUM_MALICIOUS_NODES."
+        )
+
+    max_selectable = n - f - 2
+    if m > max_selectable:
+        raise ValueError(
+            "MULTIKRUM_NUM_NODES_TO_SELECT is too large for current (n, f). "
+            f"Need m <= n - f - 2, got m={m}, n={n}, f={f}, limit={max_selectable}."
+        )
+
 
 def _validate_qfedavg(cfg) -> None:
     """Validate QFedAvg (q-weighted aggregation) parameters."""
+    if not math.isfinite(cfg.QFEDAVG_CLIENT_LEARNING_RATE):
+        raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be finite")
     if cfg.QFEDAVG_CLIENT_LEARNING_RATE <= 0:
         raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be > 0")
+
+    if not math.isfinite(cfg.QFEDAVG_Q):
+        raise ValueError("QFEDAVG_Q must be finite")
     if cfg.QFEDAVG_Q < 0:
         raise ValueError("QFEDAVG_Q must be >= 0")
 

@@ -37,11 +37,19 @@ def main(grid: Grid, context: Context) -> None:
     # 初始化聚合策略
     strategy = build_strategy()
 
+    # Build train config with strategy-specific parameters
+    train_config = {"lr": train_lr}
+    
+    # Add proximal-mu for FedProx strategy (required by app/client.py)
+    from config import PROXIMAL_MU
+    if PROXIMAL_MU is not None:
+        train_config["proximal-mu"] = PROXIMAL_MU
+
     # 開始執行策略 跑 num_rounds 次
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,
-        train_config=ConfigRecord({"lr": train_lr}),
+        train_config=ConfigRecord(train_config),
         num_rounds=NUM_ROUNDS,
         evaluate_fn=evaluate_fn,
     )

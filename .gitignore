@@ -1,12 +1,32 @@
-/.venv
-/__pycache__
-/.vscode
-/data
+# Python environment
+.venv/
+venv/
 
-/final_model.pt
-/final_model_xgb.json
+# Python cache / build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
 
-/app/__pycache__
-/config/__pycache__
-/record/__pycache__
-/strategies/__pycache__
+# IDE settings
+.vscode/
+
+# Dataset and generated experiment outputs
+data/
+
+# Trained model artifacts
+final_model.pt
+final_model_xgb.json
+
+# Runtime / logs
+*.log
+*.tmp
+*.temp
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
