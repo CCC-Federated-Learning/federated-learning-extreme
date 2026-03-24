@@ -1,5 +1,7 @@
 /.venv
+/venv311
 /__pycache__
+/strategies/__pycache__
 /data
 /final_model.pt
 /strategy.py/__pycache__
