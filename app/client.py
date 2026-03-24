@@ -5,7 +5,7 @@ from flwr.common.differential_privacy import compute_adaptive_clip_model_update
 from flwr.common.differential_privacy_constants import KEY_CLIPPING_NORM, KEY_NORM_BIT
 
 from config import BATCH_SIZE, DATA_DISTRIBUTION, DIRICHLET_ALPHA, LOCAL_EPOCHS, DATA_SEED
-from task import Net, load_data, train_fn, test_fn
+from app.task import Net, load_data, train_fn, test_fn
 
 client_app = ClientApp()
 

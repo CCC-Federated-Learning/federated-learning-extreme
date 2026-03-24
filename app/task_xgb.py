@@ -1,7 +1,7 @@
 import numpy as np
 
 from config import DataDistribution
-from task import _build_partition_indices, _get_datasets
+from app.task import _build_partition_indices, _get_datasets
 
 
 _partition_cache = {"train": {}, "test": {}}

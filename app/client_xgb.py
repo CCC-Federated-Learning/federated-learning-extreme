@@ -19,7 +19,7 @@ from config import (
     XGB_REG_LAMBDA,
     XGB_SUBSAMPLE,
 )
-from task_xgb import load_partition_data
+from app.task_xgb import load_partition_data
 
 client_app = ClientApp()
 

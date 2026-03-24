@@ -17,7 +17,7 @@ from config import (
     STRATEGY_NAME,
     TIMESTAMP_FORMAT,
 )
-from task import load_data
+from app.task import load_data
 
 
 def plot_client_distribution(

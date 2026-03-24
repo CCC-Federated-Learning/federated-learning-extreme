@@ -13,7 +13,7 @@ from config import (
     validate_config,
 )
 from draw_distribution import plot_client_distribution
-from server import recorder, server_app
+from app.server import recorder, server_app
 from strategies.factory import build_strategy
 
 
@@ -31,11 +31,11 @@ def _select_client_app():
                 "Install it with: pip install xgboost"
             ) from ex
 
-        from client_xgb import client_app as selected_client_app
+        from app.client_xgb import client_app as selected_client_app
 
         return selected_client_app
 
-    from client import client_app as selected_client_app
+    from app.client import client_app as selected_client_app
 
     return selected_client_app
 

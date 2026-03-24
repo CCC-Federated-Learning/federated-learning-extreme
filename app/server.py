@@ -6,8 +6,8 @@ from flwr.serverapp import Grid, ServerApp
 from config import LR, NUM_ROUNDS, STRATEGY_NAME, StrategyName, XGB_ETA, XGB_NUM_CLASS
 from record import RunRecorder
 from strategies.factory import build_strategy
-from task import Net, load_centralized_dataset, test_fn
-from task_xgb import load_centralized_test_data
+from app.task import Net, load_centralized_dataset, test_fn
+from app.task_xgb import load_centralized_test_data
 
 
 server_app = ServerApp()
