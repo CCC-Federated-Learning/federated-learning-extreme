@@ -44,12 +44,12 @@ from .strategy import (
 # 6) Client sampling studies: lower FRACTION_TRAIN from 1.0.
 # 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
 # 在這裡改策略
-STRATEGY_NAME = StrategyName.QFEDAVG
+STRATEGY_NAME = StrategyName.BULYAN
 DATA_DISTRIBUTION = DataDistribution.IID
 DATASET_NAME = DatasetName.MNIST
 
-NUM_ROUNDS = 200
-LOCAL_EPOCHS = 3
+NUM_ROUNDS = 20
+LOCAL_EPOCHS = 1
 BATCH_SIZE = 64
 LR = 0.001
 NUM_PARTITIONS = 10
