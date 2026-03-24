@@ -3,4 +3,4 @@ if 歷史遺留:
 elif 有用:
     rename to {timestamp}_{strategy_name}
 else:
-    代處理
+    待處理
