@@ -1,12 +1,11 @@
-"""
-Script to organize and move experiment results to res-happy-ending directory.
-Creates a properly named directory containing all PUT-DATA-THERE and generate_charts results.
-"""
+"""Move first-station outputs into second-station with normalized batch naming."""
 
-import os
-import re
 import shutil
 from pathlib import Path
+
+
+FIRST_STATION_NAME = "res-drag-set-to-there----first-station"
+SECOND_STATION_NAME = "res-happy-ending--------second-station"
 
 
 def extract_metadata(metadata_path):
@@ -61,6 +60,10 @@ def organize_results():
     script_dir = Path(__file__).resolve().parent
     project_root = script_dir.parent
 
+    if script_dir.name != FIRST_STATION_NAME:
+        print(f"\n⚠️  Warning: script is not under expected first station '{FIRST_STATION_NAME}'")
+        print(f"Current script dir: {script_dir}")
+
     print("\n" + "="*70)
     print("Experiment Results Organization Script")
     print("="*70)
@@ -97,13 +100,13 @@ def organize_results():
     dir_name = create_directory_name(config)
     print(f"\n📁 Creating directory: {dir_name}")
     
-    # Check if res-happy-ending exists, create if not
-    res_happy_ending = project_root / 'res-happy-ending'
-    res_happy_ending.mkdir(exist_ok=True)
-    print(f"✓ Ensured res-happy-ending directory exists")
+    # Check if second-station exists, create if not
+    second_station = project_root / SECOND_STATION_NAME
+    second_station.mkdir(exist_ok=True)
+    print(f"✓ Ensured {SECOND_STATION_NAME} directory exists")
     
     # Create target directory
-    target_dir = res_happy_ending / dir_name
+    target_dir = second_station / dir_name
     
     if target_dir.exists():
         print(f"\n⚠️  Directory already exists: {target_dir}")
@@ -124,7 +127,7 @@ def organize_results():
     
     try:
         shutil.copytree(src_put_data, dst_put_data, dirs_exist_ok=True)
-        print(f"✓ Copied PUT-DATA-THERE to {dst_put_data.relative_to(res_happy_ending)}")
+        print(f"✓ Copied PUT-DATA-THERE to {dst_put_data.relative_to(second_station)}")
     except Exception as e:
         print(f"❌ Error copying PUT-DATA-THERE: {e}")
         return False
@@ -136,7 +139,7 @@ def organize_results():
     
     try:
         shutil.copytree(src_charts, dst_charts, dirs_exist_ok=True)
-        print(f"✓ Copied generate_charts to {dst_charts.relative_to(res_happy_ending)}")
+        print(f"✓ Copied generate_charts to {dst_charts.relative_to(second_station)}")
     except Exception as e:
         print(f"❌ Error copying generate_charts: {e}")
         return False

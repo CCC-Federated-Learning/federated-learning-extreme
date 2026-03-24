@@ -6,6 +6,8 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+FIRST_STATION_NAME = "res-drag-set-to-there----first-station"
+
 # Configure matplotlib for better rendering
 plt.rcParams['font.size'] = 10
 plt.rcParams['figure.dpi'] = 150
@@ -562,7 +564,9 @@ class StrategyAnalyzer:
 
 if __name__ == '__main__':
     # Set paths
-    current_dir = Path(__file__).parent
+    current_dir = Path(__file__).resolve().parent
+    if current_dir.name != FIRST_STATION_NAME:
+        print(f"Warning: current folder name is '{current_dir.name}', expected '{FIRST_STATION_NAME}'")
     data_dir = current_dir / 'PUT-DATA-THERE'
     output_dir = current_dir / 'generate_charts'
     
