@@ -1,7 +1,12 @@
 /.venv
 /__pycache__
-/data
-/final_model.pt
-/strategy.py/__pycache__
 /.vscode
+/data
+
+/final_model.pt
 /final_model_xgb.json
+
+/app/__pycache__
+/config/__pycache__
+/record/__pycache__
+/strategies/__pycache__
