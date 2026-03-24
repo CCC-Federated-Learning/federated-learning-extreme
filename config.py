@@ -24,6 +24,13 @@ from strategy_config import (
     SERVER_LEARNING_RATE,
     SERVER_MOMENTUM,
     SERVER_TAU,
+    XGB_COLSAMPLE_BYTREE,
+    XGB_ETA,
+    XGB_MAX_DEPTH,
+    XGB_MIN_CHILD_WEIGHT,
+    XGB_NUM_LOCAL_ROUND,
+    XGB_REG_LAMBDA,
+    XGB_SUBSAMPLE,
 )
 
 
@@ -79,7 +86,7 @@ FRACTION_TRAIN = 1.0  # train on all clients every round
 FRACTION_EVALUATE = 1 # test all clients every round
 
 #在這裡改策略
-STRATEGY_NAME = StrategyName.FEDTRIMMEDAVG
+STRATEGY_NAME = StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING
 
 # Strategy defaults from strategy_config.py
 # Allow None in strategy file to fallback to global defaults here.
@@ -97,6 +104,10 @@ DATA_SEED = 499
 # Runtime settings
 CLIENT_NUM_CPUS = 2
 CLIENT_NUM_GPUS_IF_AVAILABLE = 1.0
+
+# XGBoost settings
+XGB_OBJECTIVE = "multi:softprob"
+XGB_NUM_CLASS = 10
 
 # Draw settings
 DRAW_SAVE_DIR = "distribution_chart"
@@ -164,8 +175,24 @@ def validate_config() -> None:
         raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be > 0")
     if QFEDAVG_Q < 0:
         raise ValueError("QFEDAVG_Q must be >= 0")
-    distribution_values = {item.value.lower() for item in DataDistribution}
-    if DATA_DISTRIBUTION.lower() not in distribution_values:
+    if XGB_NUM_LOCAL_ROUND <= 0:
+        raise ValueError("XGB_NUM_LOCAL_ROUND must be > 0")
+    if XGB_MAX_DEPTH <= 0:
+        raise ValueError("XGB_MAX_DEPTH must be > 0")
+    if XGB_ETA <= 0:
+        raise ValueError("XGB_ETA must be > 0")
+    if not (0 < XGB_SUBSAMPLE <= 1):
+        raise ValueError("XGB_SUBSAMPLE must be in (0, 1]")
+    if not (0 < XGB_COLSAMPLE_BYTREE <= 1):
+        raise ValueError("XGB_COLSAMPLE_BYTREE must be in (0, 1]")
+    if XGB_MIN_CHILD_WEIGHT < 0:
+        raise ValueError("XGB_MIN_CHILD_WEIGHT must be >= 0")
+    if XGB_REG_LAMBDA < 0:
+        raise ValueError("XGB_REG_LAMBDA must be >= 0")
+    if XGB_NUM_CLASS <= 1:
+        raise ValueError("XGB_NUM_CLASS must be > 1")
+    # Validate DATA_DISTRIBUTION is a valid enum value
+    if not isinstance(DATA_DISTRIBUTION, DataDistribution):
         supported = ", ".join(item.value for item in DataDistribution)
         raise ValueError(f"DATA_DISTRIBUTION must be one of: {supported}")
     if DIRICHLET_ALPHA <= 0:

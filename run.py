@@ -8,11 +8,36 @@ from config import (
     CLIENT_NUM_GPUS_IF_AVAILABLE,
     DATA_SEED,
     NUM_PARTITIONS,
+    STRATEGY_NAME,
+    StrategyName,
     validate_config,
 )
 from draw_distribution import plot_client_distribution
 from server import recorder, server_app
-from client import client_app
+from strategies.factory import build_strategy
+
+
+def _is_xgb_strategy() -> bool:
+    return STRATEGY_NAME in {StrategyName.FEDXGBBAGGING, StrategyName.FEDXGBCYCLIC}
+
+
+def _select_client_app():
+    if _is_xgb_strategy():
+        try:
+            import xgboost  # noqa: F401
+        except ModuleNotFoundError as ex:
+            raise ModuleNotFoundError(
+                "XGBoost strategies require package 'xgboost'. "
+                "Install it with: pip install xgboost"
+            ) from ex
+
+        from client_xgb import client_app as selected_client_app
+
+        return selected_client_app
+
+    from client import client_app as selected_client_app
+
+    return selected_client_app
 
 
 def run_simulation() -> None:
@@ -20,6 +45,10 @@ def run_simulation() -> None:
     os.environ.setdefault("RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO", "0")
 
     validate_config()
+    # Build once in main process to surface compatibility issues early
+    # (instead of failing later inside the ServerApp background thread).
+    build_strategy()
+    selected_client_app = _select_client_app()
     backend_config = {
         "client_resources": {
             "num_cpus": CLIENT_NUM_CPUS,
@@ -29,7 +58,7 @@ def run_simulation() -> None:
 
     flwr.simulation.run_simulation(
         server_app=server_app,
-        client_app=client_app,
+        client_app=selected_client_app,
         num_supernodes=NUM_PARTITIONS,
         backend_config=backend_config,
     )

@@ -5,6 +5,7 @@ import numpy as np
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets
 from torchvision.transforms import Compose, Normalize, ToTensor
+from config import DataDistribution
 
 
 class Net(nn.Module):
@@ -50,14 +51,12 @@ def _get_datasets():
 def _build_partition_indices(
     targets: torch.Tensor,
     num_partitions: int,
-    distribution: str,
+    distribution: DataDistribution,
     dirichlet_alpha: float,
     seed: int,
 ):
     """Build sample indices for each client partition."""
-    distribution = distribution.lower()
-
-    if distribution == "label":
+    if distribution == DataDistribution.LABEL:
         return [
             (targets == (partition_idx % 10)).nonzero(as_tuple=True)[0].tolist()
             for partition_idx in range(num_partitions)
@@ -66,11 +65,11 @@ def _build_partition_indices(
     rng = np.random.default_rng(seed)
     all_indices = np.arange(len(targets))
 
-    if distribution == "iid":
+    if distribution == DataDistribution.IID:
         rng.shuffle(all_indices)
         return [indices.tolist() for indices in np.array_split(all_indices, num_partitions)]
 
-    if distribution == "dirichlet":
+    if distribution == DataDistribution.DIRICHLET:
         if dirichlet_alpha <= 0:
             raise ValueError("dirichlet_alpha must be > 0 when using dirichlet distribution")
 
@@ -94,7 +93,7 @@ def _build_partition_indices(
         return client_indices
 
     raise ValueError(
-        "distribution must be one of: 'iid', 'dirichlet', or 'label'"
+        f"distribution must be one of: {', '.join(item.value for item in DataDistribution)}"
     )
 
 
@@ -102,22 +101,26 @@ def load_data(
     partition_id: int,
     num_partitions: int,
     batch_size: int,
-    distribution: str = "iid",
+    distribution: DataDistribution = None,
     dirichlet_alpha: float = 0.5,
     seed: int = 42,
 ):
     """Load partitioned MNIST data with Flower-style data distributions.
 
     distribution options:
-    - "iid": random even split across clients (Flower common baseline)
-    - "dirichlet": non-IID split controlled by dirichlet_alpha
-    - "label": legacy mode, each client mainly maps to one label
+    - DataDistribution.IID: random even split across clients (Flower common baseline)
+    - DataDistribution.DIRICHLET: non-IID split controlled by dirichlet_alpha
+    - DataDistribution.LABEL: legacy mode, each client mainly maps to one label
     """
+    if distribution is None:
+        distribution = DataDistribution.IID
+    
     train_dataset, test_dataset = _get_datasets()
-    distribution = distribution.lower()
+    # Use enum name (uppercase) as cache key
+    cache_key = (distribution.name, num_partitions, dirichlet_alpha, seed)
 
-    train_cache_key = (distribution, num_partitions, dirichlet_alpha, seed)
-    test_cache_key = (distribution, num_partitions, dirichlet_alpha, seed)
+    train_cache_key = cache_key
+    test_cache_key = cache_key
 
     if train_cache_key not in _partition_cache["train"]:
         _partition_cache["train"][train_cache_key] = _build_partition_indices(

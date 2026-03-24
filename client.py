@@ -1,6 +1,8 @@
 import torch
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
+from flwr.common.differential_privacy import compute_adaptive_clip_model_update
+from flwr.common.differential_privacy_constants import KEY_CLIPPING_NORM, KEY_NORM_BIT
 
 from config import BATCH_SIZE, DATA_DISTRIBUTION, DIRICHLET_ALPHA, LOCAL_EPOCHS, DATA_SEED
 from task import Net, load_data, train_fn, test_fn
@@ -14,6 +16,10 @@ def train(msg: Message, context: Context):
     # Load the model and initialize it with the received weights
     model = Net()
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
+    # Keep a CPU snapshot of server parameters for DP clipping mods.
+    server_state_dict = {
+        key: value.detach().cpu().clone() for key, value in model.state_dict().items()
+    }
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -49,11 +55,32 @@ def train(msg: Message, context: Context):
     )
 
     # Construct and return reply Message
+    if KEY_CLIPPING_NORM in config:
+        clipping_norm = float(config[KEY_CLIPPING_NORM])
+        client_state_dict = model.state_dict()
+
+        server_params = [tensor.numpy() for tensor in server_state_dict.values()]
+        client_params = [tensor.detach().cpu().numpy() for tensor in client_state_dict.values()]
+
+        # This applies clipping in-place to client_params and returns norm_bit.
+        norm_bit = compute_adaptive_clip_model_update(
+            client_params, server_params, clipping_norm
+        )
+
+        clipped_state_dict = {}
+        for (key, ref_tensor), clipped_arr in zip(client_state_dict.items(), client_params):
+            clipped_state_dict[key] = torch.from_numpy(clipped_arr).to(
+                device=ref_tensor.device, dtype=ref_tensor.dtype
+            )
+        model.load_state_dict(clipped_state_dict)
+
     model_record = ArrayRecord(model.state_dict())
     metrics = {
         "train_loss": train_loss,
         "num-examples": len(trainloader.dataset),
     }
+    if KEY_CLIPPING_NORM in config:
+        metrics[KEY_NORM_BIT] = float(norm_bit)
     metric_record = MetricRecord(metrics)
     content = RecordDict({"arrays": model_record, "metrics": metric_record})
     return Message(content=content, reply_to=msg)

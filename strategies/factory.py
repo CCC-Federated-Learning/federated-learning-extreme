@@ -20,34 +20,35 @@ from .fedxgbcyclic import build_fedxgbcyclic
 from .qfedavg import build_qfedavg
 
 
-# Strategy registry: add more built-in Flower strategies here.
+# Strategy registry mapped by StrategyName enum
 STRATEGY_REGISTRY = {
-    "fedavg": build_fedavg,
-    "fedavgm": build_fedavgm,
-    "fedadagrad": build_fedadagrad,
-    "fedadam": build_fedadam,
-    "fedprox": build_fedprox,
-    "fedyogi": build_fedyogi,
-    "bulyan": build_bulyan,
-    "krum": build_krum,
-    "multikrum": build_multikrum,
-    "fedmedian": build_fedmedian,
-    "fedtrimmedavg": build_fedtrimmedavg,
-    "differentialprivacyclientsideadaptiveclipping": build_dp_client_adaptive,
-    "differentialprivacyclientsidefixedclipping": build_dp_client_fixed,
-    "differentialprivacyserversideadaptiveclipping": build_dp_server_adaptive,
-    "differentialprivacyserversidefixedclipping": build_dp_server_fixed,
-    "fedxgbbagging": build_fedxgbbagging,
-    "fedxgbcyclic": build_fedxgbcyclic,
-    "qfedavg": build_qfedavg,
+    "FEDAVG": build_fedavg,
+    "FEDAVGM": build_fedavgm,
+    "FEDADAGRAD": build_fedadagrad,
+    "FEDADAM": build_fedadam,
+    "FEDPROX": build_fedprox,
+    "FEDYOGI": build_fedyogi,
+    "BULYAN": build_bulyan,
+    "KRUM": build_krum,
+    "MULTIKRUM": build_multikrum,
+    "FEDMEDIAN": build_fedmedian,
+    "FEDTRIMMEDAVG": build_fedtrimmedavg,
+    "DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING": build_dp_client_adaptive,
+    "DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING": build_dp_client_fixed,
+    "DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING": build_dp_server_adaptive,
+    "DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING": build_dp_server_fixed,
+    "FEDXGBBAGGING": build_fedxgbbagging,
+    "FEDXGBCYCLIC": build_fedxgbcyclic,
+    "QFEDAVG": build_qfedavg,
 }
 
 
 def build_strategy():
-    strategy_key = config.STRATEGY_NAME.lower()
-    if strategy_key not in STRATEGY_REGISTRY:
+    # Use enum.name (uppercase) directly - no string manipulation needed
+    strategy_name = config.STRATEGY_NAME.name
+    if strategy_name not in STRATEGY_REGISTRY:
         supported = ", ".join(sorted(STRATEGY_REGISTRY.keys()))
         raise ValueError(
             f"Unsupported STRATEGY_NAME: {config.STRATEGY_NAME}. Supported: {supported}"
         )
-    return STRATEGY_REGISTRY[strategy_key]()
+    return STRATEGY_REGISTRY[strategy_name]()

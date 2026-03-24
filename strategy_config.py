@@ -1,4 +1,4 @@
-# Centralized strategy-specific configuration.
+# centralized strategy-specific configuration.
 # Keep only strategy hyperparameters here; global experiment settings stay in config.py.
 # You can set some values to None to fallback to config.py defaults.
 
@@ -35,3 +35,13 @@ DP_CLIPPED_COUNT_STDDEV = None
 # QFedAvg
 QFEDAVG_CLIENT_LEARNING_RATE = None
 QFEDAVG_Q = 0.1
+
+# XGBoost
+XGB_NUM_LOCAL_ROUND = 1
+XGB_MAX_DEPTH = 6
+XGB_ETA = 0.3
+XGB_SUBSAMPLE = 1.0
+# XGB_COLSAMPLE_BYTREE = 1.0
+XGB_COLSAMPLE_BYTREE = 0.8
+XGB_MIN_CHILD_WEIGHT = 1.0
+XGB_REG_LAMBDA = 1.0
