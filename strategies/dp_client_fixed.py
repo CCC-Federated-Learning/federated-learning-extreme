@@ -5,12 +5,16 @@ from config import (
     DP_NOISE_MULTIPLIER,
     DP_NUM_SAMPLED_CLIENTS,
     FRACTION_EVALUATE,
+    FRACTION_TRAIN,
 )
 
 
 def build_dp_client_fixed():
     """Build Flower client-side fixed clipping DP strategy from project config."""
-    base_strategy = FedAvg(fraction_evaluate=FRACTION_EVALUATE)
+    base_strategy = FedAvg(
+        fraction_train=FRACTION_TRAIN,
+        fraction_evaluate=FRACTION_EVALUATE,
+    )
     return DifferentialPrivacyClientSideFixedClipping(
         strategy=base_strategy,
         noise_multiplier=DP_NOISE_MULTIPLIER,
