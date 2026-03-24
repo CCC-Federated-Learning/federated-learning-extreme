@@ -1,8 +1,8 @@
 from pathlib import Path
 import sys
-from config_types import DataDistribution, DatasetName, StrategyName
+from .types import DataDistribution, DatasetName, StrategyName
 
-from config_strategy import (
+from .strategy import (
     BETA_1,
     BETA_2,
     BULYAN_NUM_MALICIOUS_NODES,
@@ -102,6 +102,6 @@ def get_draw_output_path() -> Path:
 
 
 def validate_config() -> None:
-    from config_validation import validate_config_module
+    from .validation import validate_config_module
 
     validate_config_module(sys.modules[__name__])
