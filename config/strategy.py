@@ -13,6 +13,26 @@
 #
 # For detailed strategy analysis, see: ../STRATEGY_AUDIT_LOG.md
 
+# STRATEGIES_IN_ORDER = [
+#     "fedavg",
+#     "fedavgm",
+#     "fedadagrad",
+#     "fedadam",
+#     "fedprox",
+#     "fedyogi",
+#     "bulyan",
+#     "krum",
+#     "multikrum",
+#     "fedmedian",
+#     "fedtrimmedavg",
+#     "differentialprivacyclientsideadaptiveclipping",
+#     "differentialprivacyclientsidefixedclipping",
+#     "differentialprivacyserversideadaptiveclipping",
+#     "differentialprivacyserversidefixedclipping",
+#     "fedxgbbagging",
+#     "fedxgbcyclic",
+#     "qfedavg",
+# ]
 
 # ============================================================================
 # 1️⃣ FEDAVG - Federated Averaging (Standard FL Baseline)
