@@ -11,14 +11,14 @@ from config_strategy import (
     DP_CLIPPING_NORM,
     DP_INITIAL_CLIPPING_NORM,
     DP_NOISE_MULTIPLIER,
-    DP_NUM_SAMPLED_CLIENTS,
+    DP_NUM_SAMPLED_CLIENTS as STRATEGY_DP_NUM_SAMPLED_CLIENTS,
     DP_TARGET_CLIPPED_QUANTILE,
     FEDTRIMMEDAVG_BETA,
     KRUM_NUM_MALICIOUS_NODES,
     MULTIKRUM_NUM_MALICIOUS_NODES,
     MULTIKRUM_NUM_NODES_TO_SELECT,
     PROXIMAL_MU,
-    QFEDAVG_CLIENT_LEARNING_RATE,
+    QFEDAVG_CLIENT_LEARNING_RATE as STRATEGY_QFEDAVG_CLIENT_LEARNING_RATE,
     QFEDAVG_Q,
     SERVER_ETA,
     SERVER_ETA_L,
@@ -34,23 +34,37 @@ from config_strategy import (
     XGB_SUBSAMPLE,
 )
 
-# Global experiment settings
-NUM_PARTITIONS = 10
-BATCH_SIZE = 64
-LOCAL_EPOCHS = 3
-NUM_ROUNDS = 200
-LR = 0.001
-DATASET_NAME = DatasetName.MNIST
-FRACTION_TRAIN = 1.0  # train on all clients every round
-FRACTION_EVALUATE = 1 # test all clients every round
-
-#在這裡改策略
+# Commonly adjusted experiment settings
+# Quick guide:
+# 1) Switch algorithm: change STRATEGY_NAME.
+# 2) Compare IID vs Non-IID: change DATA_DISTRIBUTION (and DIRICHLET_ALPHA if needed).
+# 3) Speed up debug runs: lower NUM_ROUNDS / LOCAL_EPOCHS / NUM_PARTITIONS.
+# 4) Improve stability: increase BATCH_SIZE or reduce LR.
+# 5) Full participation baseline: keep FRACTION_TRAIN/FRACTION_EVALUATE at 1.0.
+# 6) Client sampling studies: lower FRACTION_TRAIN from 1.0.
+# 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
+# 在這裡改策略
 STRATEGY_NAME = StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING
+DATA_DISTRIBUTION = DataDistribution.LABEL
+DATASET_NAME = DatasetName.MNIST
+
+NUM_ROUNDS = 200
+LOCAL_EPOCHS = 3
+BATCH_SIZE = 64
+LR = 0.001
+NUM_PARTITIONS = 10
+
+FRACTION_TRAIN = 1.0  # train on all clients every round
+FRACTION_EVALUATE = 1  # test all clients every round
+
+# Data split controls
+DIRICHLET_ALPHA = 0.5  # Dirichlet parameter (small = Non-IID)
+DATA_SEED = 499
 
 def _resolve_strategy_defaults() -> tuple[int, float]:
     """Resolve strategy defaults from global settings when strategy config uses None."""
-    dp_num_sampled_clients = DP_NUM_SAMPLED_CLIENTS
-    qfedavg_client_lr = QFEDAVG_CLIENT_LEARNING_RATE
+    dp_num_sampled_clients = STRATEGY_DP_NUM_SAMPLED_CLIENTS
+    qfedavg_client_lr = STRATEGY_QFEDAVG_CLIENT_LEARNING_RATE
 
     if dp_num_sampled_clients is None:
         dp_num_sampled_clients = NUM_PARTITIONS
@@ -62,15 +76,9 @@ def _resolve_strategy_defaults() -> tuple[int, float]:
 
 DP_NUM_SAMPLED_CLIENTS, QFEDAVG_CLIENT_LEARNING_RATE = _resolve_strategy_defaults()
 
-# Data partition settings
-DATA_DISTRIBUTION = DataDistribution.LABEL 
-# Data distribution options:
-DIRICHLET_ALPHA = 0.5     # Dirichlet parameter (small = Non-IID)
-DATA_SEED = 499 
-
 # Runtime settings
-CLIENT_NUM_CPUS = 2
-CLIENT_NUM_GPUS_IF_AVAILABLE = 1.0
+CLIENT_NUM_CPUS = 1
+CLIENT_NUM_GPUS_IF_AVAILABLE = 0.1
 
 # XGBoost settings
 XGB_OBJECTIVE = "multi:softprob"
