@@ -43,7 +43,8 @@ from .strategy import (
 # 5) Full participation baseline: keep FRACTION_TRAIN/FRACTION_EVALUATE at 1.0.
 # 6) Client sampling studies: lower FRACTION_TRAIN from 1.0.
 # 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
-# 在這裡改策略
+
+# 在這裡改策略 <========================
 STRATEGY_NAME = StrategyName.FEDADAGRAD
 DATA_DISTRIBUTION = DataDistribution.LABEL
 DATASET_NAME = DatasetName.MNIST
