@@ -111,7 +111,7 @@ class StrategyAnalyzer:
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
         
         plt.tight_layout()
-        output_path = self.output_dir / '01_all_strategies_acc_round.png'
+        output_path = self.output_dir / '01_acc_round_all_strategies.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -179,7 +179,7 @@ class StrategyAnalyzer:
         fig.suptitle('Strategy Performance Table: Best Accuracy vs Training Time\n(All 18 Strategies)', 
                     fontsize=13, fontweight='bold', y=0.98)
         
-        output_path = self.output_dir / '02_accuracy_time_comparison_table.png'
+        output_path = self.output_dir / '02a_accuracy_time_comparison_table.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -232,7 +232,7 @@ class StrategyAnalyzer:
                     fontsize=14, fontweight='bold', y=0.995)
         
         plt.tight_layout()
-        output_path = self.output_dir / '03_grouped_strategies_comparison.png'
+        output_path = self.output_dir / '03a_grouped_strategies_comparison.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -285,7 +285,7 @@ class StrategyAnalyzer:
                     fontsize=12, fontweight='bold', y=0.995)
         
         plt.tight_layout()
-        output_path = self.output_dir / '04_grouped_detailed_comparison.png'
+        output_path = self.output_dir / '03b_grouped_detailed_comparison.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -339,7 +339,7 @@ class StrategyAnalyzer:
         ax.set_ylim([0, 105])
         
         plt.tight_layout()
-        output_path = self.output_dir / '05_final_accuracy_by_group.png'
+        output_path = self.output_dir / '04a_final_accuracy_by_group.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -520,7 +520,7 @@ class StrategyAnalyzer:
         ax.set_ylim([0, 105])
         
         plt.tight_layout()
-        output_path = self.output_dir / '06_final_accuracy_sorted.png'
+        output_path = self.output_dir / '04b_final_accuracy_sorted.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         print(f"✓ Saved: {output_path.name}")
         plt.close()
@@ -531,28 +531,28 @@ class StrategyAnalyzer:
         print("Generating Strategy Comparison Charts")
         print("="*60)
         
-        print("\n1. Generating all-strategies accuracy curve...")
+        print("\n01. Generating all-strategies accuracy curve...")
         self.plot_all_strategies_acc_round()
         
-        print("2. Generating accuracy-time comparison table...")
+        print("02a. Generating accuracy-time comparison table...")
         self.plot_accuracy_time_table()
         
-        print("2b. Generating sorted accuracy-time comparison table (by accuracy)...")
+        print("02b. Generating sorted accuracy-time comparison table (by accuracy)...")
         self.plot_accuracy_time_table_sorted()
         
-        print("2c. Generating sorted accuracy-time comparison table (by time)...")
+        print("02c. Generating sorted accuracy-time comparison table (by time)...")
         self.plot_accuracy_time_table_sorted_by_time()
         
-        print("3. Generating grouped strategy analysis...")
+        print("03a. Generating grouped strategy analysis...")
         self.plot_grouped_strategies()
         
-        print("4. Generating detailed grouped comparison...")
+        print("03b. Generating detailed grouped comparison...")
         self.plot_grouped_subplots()
         
-        print("5. Generating final accuracy comparison...")
+        print("04a. Generating final accuracy comparison...")
         self.plot_final_accuracy_boxplot()
         
-        print("6. Generating final accuracy comparison (sorted)...")
+        print("04b. Generating final accuracy comparison (sorted)...")
         self.plot_final_accuracy_sorted()
         
         print("\n" + "="*60)

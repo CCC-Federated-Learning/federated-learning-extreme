@@ -24,10 +24,8 @@ def extract_metadata(metadata_path):
     return metadata
 
 
-def get_experiment_config():
+def get_experiment_config(data_dir: Path):
     """Extract configuration from first available metadata.txt file."""
-    data_dir = Path('PUT-DATA-THERE')
-    
     if not data_dir.exists():
         print("Error: PUT-DATA-THERE directory not found")
         return None
@@ -48,7 +46,7 @@ def get_experiment_config():
                         'run_id': metadata['run_id']
                     }
     
-    print("Error: Could not find valid metadata.txt files")
+    print("Error: Could not find valid metadata.txt files (directory may be empty)")
     return None
 
 
@@ -60,14 +58,16 @@ def create_directory_name(config):
 
 def organize_results():
     """Main function to organize and move results."""
-    current_dir = Path.cwd()
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parent
+
     print("\n" + "="*70)
     print("Experiment Results Organization Script")
     print("="*70)
     
     # Check required directories
-    put_data_dir = current_dir / 'PUT-DATA-THERE'
-    generate_charts_dir = current_dir / 'generate_charts'
+    put_data_dir = script_dir / 'PUT-DATA-THERE'
+    generate_charts_dir = script_dir / 'generate_charts'
     
     if not put_data_dir.exists():
         print("\n❌ Error: PUT-DATA-THERE directory not found")
@@ -82,7 +82,7 @@ def organize_results():
     
     # Get experiment configuration
     print("\nExtracting experiment configuration...")
-    config = get_experiment_config()
+    config = get_experiment_config(put_data_dir)
     
     if not config:
         print("❌ Failed to extract experiment configuration")
@@ -98,7 +98,7 @@ def organize_results():
     print(f"\n📁 Creating directory: {dir_name}")
     
     # Check if res-happy-ending exists, create if not
-    res_happy_ending = Path(__file__).parent.parent / 'res-happy-ending'
+    res_happy_ending = project_root / 'res-happy-ending'
     res_happy_ending.mkdir(exist_ok=True)
     print(f"✓ Ensured res-happy-ending directory exists")
     
@@ -164,7 +164,7 @@ def organize_results():
     print("\n" + "="*70)
     print("✅ SUCCESS: Results organized and moved!")
     print("="*70)
-    print(f"\nLocation: {target_dir.relative_to(current_dir.parent)}")
+    print(f"\nLocation: {target_dir.relative_to(project_root)}")
     print(f"Full path: {target_dir}\n")
     
     return True
