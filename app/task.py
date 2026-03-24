@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets
 from torchvision.transforms import Compose, Normalize, ToTensor
 from config import DataDistribution
+from app.data_cache import get_datasets, get_partition_cache, DatasetCache
 
 
 class Net(nn.Module):
@@ -28,24 +29,12 @@ class Net(nn.Module):
         return x
 
 
-pytorch_transforms = Compose([ToTensor(), Normalize((0.1307,), (0.3081,))])
-
-_cached_train = None
-_cached_test = None
-_partition_cache = {"train": {}, "test": {}}
+pytorch_transforms = DatasetCache.pytorch_transforms
 
 
 def _get_datasets():
-    """Load and cache MNIST train/test datasets."""
-    global _cached_train, _cached_test
-    if _cached_train is None:
-        _cached_train = datasets.MNIST(
-            root="./data", train=True, download=True, transform=pytorch_transforms
-        )
-        _cached_test = datasets.MNIST(
-            root="./data", train=False, download=True, transform=pytorch_transforms
-        )
-    return _cached_train, _cached_test
+    """Load and cache MNIST train/test datasets using shared cache."""
+    return get_datasets()
 
 
 def _build_partition_indices(
@@ -116,31 +105,30 @@ def load_data(
         distribution = DataDistribution.IID
     
     train_dataset, test_dataset = _get_datasets()
-    # Use enum name (uppercase) as cache key
+    partition_cache = get_partition_cache()
     cache_key = (distribution.name, num_partitions, dirichlet_alpha, seed)
 
-    train_cache_key = cache_key
-    test_cache_key = cache_key
-
-    if train_cache_key not in _partition_cache["train"]:
-        _partition_cache["train"][train_cache_key] = _build_partition_indices(
+    # Use shared cache to get or build partition indices
+    train_partitions = partition_cache.get_or_build_train(
+        cache_key,
+        lambda: _build_partition_indices(
             train_dataset.targets,
             num_partitions,
             distribution,
             dirichlet_alpha,
             seed,
-        )
-    if test_cache_key not in _partition_cache["test"]:
-        _partition_cache["test"][test_cache_key] = _build_partition_indices(
+        ),
+    )
+    test_partitions = partition_cache.get_or_build_test(
+        cache_key,
+        lambda: _build_partition_indices(
             test_dataset.targets,
             num_partitions,
             distribution,
             dirichlet_alpha,
             seed,
-        )
-
-    train_partitions = _partition_cache["train"][train_cache_key]
-    test_partitions = _partition_cache["test"][test_cache_key]
+        ),
+    )
 
     if partition_id < 0 or partition_id >= num_partitions:
         raise ValueError(

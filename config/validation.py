@@ -1,4 +1,5 @@
 def _resolve_strategy_name(cfg):
+    """Resolve and validate strategy name."""
     strategy = cfg.STRATEGY_NAME
     if isinstance(strategy, cfg.StrategyName):
         return strategy
@@ -8,6 +9,7 @@ def _resolve_strategy_name(cfg):
 
 
 def _validate_global(cfg) -> None:
+    """Validate global configuration parameters."""
     if cfg.NUM_PARTITIONS <= 0:
         raise ValueError("NUM_PARTITIONS must be > 0")
     if cfg.BATCH_SIZE <= 0:
@@ -35,6 +37,7 @@ def _validate_global(cfg) -> None:
 
 
 def _validate_adaptive_common(cfg) -> None:
+    """Validate parameters common to adaptive strategies (AdaGrad, Adam, YoGi)."""
     if cfg.SERVER_ETA <= 0:
         raise ValueError("SERVER_ETA must be > 0")
     if cfg.SERVER_ETA_L <= 0:
@@ -44,6 +47,7 @@ def _validate_adaptive_common(cfg) -> None:
 
 
 def _validate_betas(cfg) -> None:
+    """Validate beta parameters for momentum-based optimizers."""
     if not (0 < cfg.BETA_1 < 1):
         raise ValueError("BETA_1 must be in (0, 1)")
     if not (0 < cfg.BETA_2 < 1):
@@ -51,6 +55,7 @@ def _validate_betas(cfg) -> None:
 
 
 def _validate_dp(cfg) -> None:
+    """Validate differential privacy parameters."""
     if cfg.DP_NOISE_MULTIPLIER < 0:
         raise ValueError("DP_NOISE_MULTIPLIER must be >= 0")
     if cfg.DP_CLIPPING_NORM <= 0:
@@ -68,6 +73,7 @@ def _validate_dp(cfg) -> None:
 
 
 def _validate_xgb(cfg) -> None:
+    """Validate XGBoost-specific parameters."""
     if cfg.XGB_NUM_LOCAL_ROUND <= 0:
         raise ValueError("XGB_NUM_LOCAL_ROUND must be > 0")
     if cfg.XGB_MAX_DEPTH <= 0:
@@ -86,69 +92,118 @@ def _validate_xgb(cfg) -> None:
         raise ValueError("XGB_NUM_CLASS must be > 1")
 
 
+# ============================================================================
+# Strategy-Specific Validators
+# ============================================================================
+# Each validator function checks parameters specific to that strategy.
+# Functions are registered in STRATEGY_VALIDATORS dict for easy lookup.
+
+
+def _validate_fedavgm(cfg) -> None:
+    """Validate FedAvgM (Federated Averaging with Momentum) parameters."""
+    if cfg.SERVER_LEARNING_RATE <= 0:
+        raise ValueError("SERVER_LEARNING_RATE must be > 0")
+    if cfg.SERVER_MOMENTUM < 0:
+        raise ValueError("SERVER_MOMENTUM must be >= 0")
+
+
+def _validate_fedprox(cfg) -> None:
+    """Validate FedProx (Proximal Term) parameters."""
+    if cfg.PROXIMAL_MU < 0:
+        raise ValueError("PROXIMAL_MU must be >= 0")
+
+
+def _validate_fedadagrad(cfg) -> None:
+    """Validate FedAdaGrad parameters."""
+    _validate_adaptive_common(cfg)
+
+
+def _validate_fedadam(cfg) -> None:
+    """Validate FedAdam parameters."""
+    _validate_adaptive_common(cfg)
+    _validate_betas(cfg)
+
+
+def _validate_fedyogi(cfg) -> None:
+    """Validate FedYogi parameters."""
+    _validate_adaptive_common(cfg)
+    _validate_betas(cfg)
+
+
+def _validate_fedtrimmedavg(cfg) -> None:
+    """Validate FedTrimmedAvg parameters."""
+    if not (0 <= cfg.FEDTRIMMEDAVG_BETA < 0.5):
+        raise ValueError("FEDTRIMMEDAVG_BETA must be in [0, 0.5)")
+
+
+def _validate_bulyan(cfg) -> None:
+    """Validate Bulyan (robust aggregation) parameters."""
+    if cfg.BULYAN_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("BULYAN_NUM_MALICIOUS_NODES must be >= 0")
+
+
+def _validate_krum(cfg) -> None:
+    """Validate Krum (robust aggregation) parameters."""
+    if cfg.KRUM_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("KRUM_NUM_MALICIOUS_NODES must be >= 0")
+
+
+def _validate_multikrum(cfg) -> None:
+    """Validate MultiKrum (robust aggregation) parameters."""
+    if cfg.MULTIKRUM_NUM_MALICIOUS_NODES < 0:
+        raise ValueError("MULTIKRUM_NUM_MALICIOUS_NODES must be >= 0")
+    if cfg.MULTIKRUM_NUM_NODES_TO_SELECT <= 0:
+        raise ValueError("MULTIKRUM_NUM_NODES_TO_SELECT must be > 0")
+
+
+def _validate_qfedavg(cfg) -> None:
+    """Validate QFedAvg (q-weighted aggregation) parameters."""
+    if cfg.QFEDAVG_CLIENT_LEARNING_RATE <= 0:
+        raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be > 0")
+    if cfg.QFEDAVG_Q < 0:
+        raise ValueError("QFEDAVG_Q must be >= 0")
+
+
+# ============================================================================
+# Strategy Validator Registry
+# ============================================================================
+# Maps each strategy to its validation function.
+# To add a new strategy: 1) declare validator function above, 2) add entry here
+
+
+def _get_strategy_validators(cfg):
+    """Build strategy validator registry using cfg for enum references."""
+    return {
+        cfg.StrategyName.FEDAVG: lambda cfg: None,  # No special validation
+        cfg.StrategyName.FEDAVGM: _validate_fedavgm,
+        cfg.StrategyName.FEDPROX: _validate_fedprox,
+        cfg.StrategyName.FEDADAGRAD: _validate_fedadagrad,
+        cfg.StrategyName.FEDADAM: _validate_fedadam,
+        cfg.StrategyName.FEDYOGI: _validate_fedyogi,
+        cfg.StrategyName.FEDMEDIAN: lambda cfg: None,  # No special validation
+        cfg.StrategyName.FEDTRIMMEDAVG: _validate_fedtrimmedavg,
+        cfg.StrategyName.BULYAN: _validate_bulyan,
+        cfg.StrategyName.KRUM: _validate_krum,
+        cfg.StrategyName.MULTIKRUM: _validate_multikrum,
+        cfg.StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING: _validate_dp,
+        cfg.StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING: _validate_dp,
+        cfg.StrategyName.DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING: _validate_dp,
+        cfg.StrategyName.DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING: _validate_dp,
+        cfg.StrategyName.QFEDAVG: _validate_qfedavg,
+        cfg.StrategyName.FEDXGBBAGGING: _validate_xgb,
+        cfg.StrategyName.FEDXGBCYCLIC: _validate_xgb,
+    }
+
+
 def _validate_strategy_specific(cfg, strategy) -> None:
-    if strategy == cfg.StrategyName.FEDAVGM:
-        if cfg.SERVER_LEARNING_RATE <= 0:
-            raise ValueError("SERVER_LEARNING_RATE must be > 0")
-        if cfg.SERVER_MOMENTUM < 0:
-            raise ValueError("SERVER_MOMENTUM must be >= 0")
-        return
-
-    if strategy == cfg.StrategyName.FEDPROX:
-        if cfg.PROXIMAL_MU < 0:
-            raise ValueError("PROXIMAL_MU must be >= 0")
-        return
-
-    if strategy == cfg.StrategyName.FEDADAGRAD:
-        _validate_adaptive_common(cfg)
-        return
-
-    if strategy in {cfg.StrategyName.FEDADAM, cfg.StrategyName.FEDYOGI}:
-        _validate_adaptive_common(cfg)
-        _validate_betas(cfg)
-        return
-
-    if strategy == cfg.StrategyName.FEDTRIMMEDAVG:
-        if not (0 <= cfg.FEDTRIMMEDAVG_BETA < 0.5):
-            raise ValueError("FEDTRIMMEDAVG_BETA must be in [0, 0.5)")
-        return
-
-    if strategy == cfg.StrategyName.BULYAN:
-        if cfg.BULYAN_NUM_MALICIOUS_NODES < 0:
-            raise ValueError("BULYAN_NUM_MALICIOUS_NODES must be >= 0")
-        return
-
-    if strategy == cfg.StrategyName.KRUM:
-        if cfg.KRUM_NUM_MALICIOUS_NODES < 0:
-            raise ValueError("KRUM_NUM_MALICIOUS_NODES must be >= 0")
-        return
-
-    if strategy == cfg.StrategyName.MULTIKRUM:
-        if cfg.MULTIKRUM_NUM_MALICIOUS_NODES < 0:
-            raise ValueError("MULTIKRUM_NUM_MALICIOUS_NODES must be >= 0")
-        if cfg.MULTIKRUM_NUM_NODES_TO_SELECT <= 0:
-            raise ValueError("MULTIKRUM_NUM_NODES_TO_SELECT must be > 0")
-        return
-
-    if strategy in {
-        cfg.StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING,
-        cfg.StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING,
-        cfg.StrategyName.DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING,
-        cfg.StrategyName.DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING,
-    }:
-        _validate_dp(cfg)
-        return
-
-    if strategy == cfg.StrategyName.QFEDAVG:
-        if cfg.QFEDAVG_CLIENT_LEARNING_RATE <= 0:
-            raise ValueError("QFEDAVG_CLIENT_LEARNING_RATE must be > 0")
-        if cfg.QFEDAVG_Q < 0:
-            raise ValueError("QFEDAVG_Q must be >= 0")
-        return
-
-    if strategy in {cfg.StrategyName.FEDXGBBAGGING, cfg.StrategyName.FEDXGBCYCLIC}:
-        _validate_xgb(cfg)
-        return
+    """Validate strategy-specific parameters using registry pattern."""
+    validators = _get_strategy_validators(cfg)
+    validator = validators.get(strategy)
+    
+    if validator is None:
+        raise ValueError(f"No validator found for strategy: {strategy}")
+    
+    validator(cfg)
 
 
 def validate_config_module(cfg) -> None:
