@@ -15,14 +15,26 @@ from config import (
 from app.task import Net, load_data, train_fn, test_fn
 
 client_app = ClientApp()
+_THREADS_CONFIGURED = False
 
 
 def _configure_torch_threads() -> None:
     """Align PyTorch thread usage with per-client CPU allocation."""
+    global _THREADS_CONFIGURED
+
+    if _THREADS_CONFIGURED:
+        return
+
     num_threads = max(1, int(CLIENT_NUM_CPUS))
     torch.set_num_threads(num_threads)
     if hasattr(torch, "set_num_interop_threads"):
-        torch.set_num_interop_threads(num_threads)
+        try:
+            torch.set_num_interop_threads(num_threads)
+        except RuntimeError:
+            # Ray actors may already have started parallel work by this point.
+            pass
+
+    _THREADS_CONFIGURED = True
 
 @client_app.train()
 def train(msg: Message, context: Context):
