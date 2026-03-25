@@ -553,7 +553,7 @@ XGB_ETA = 0.3
 # │   - 0.5 → fast but risky
 # └─ Typical: 0.3 (default)
 
-XGB_SUBSAMPLE = 1.0
+XGB_SUBSAMPLE = 0.8
 # ├─ Purpose: Fraction of samples to use for each tree
 # ├─ Type: float
 # ├─ Range: [0.5, 1.0]
@@ -562,7 +562,7 @@ XGB_SUBSAMPLE = 1.0
 # │   - 0.8 → sample 80% of data (random forest-like)
 # └─ Typical: 1.0 for federated setting (no subsampling)
 
-XGB_COLSAMPLE_BYTREE = 1.0
+XGB_COLSAMPLE_BYTREE = 0.8
 # ├─ Purpose: Fraction of features to use for each tree
 # ├─ Type: float
 # ├─ Range: [0.3, 1.0]
