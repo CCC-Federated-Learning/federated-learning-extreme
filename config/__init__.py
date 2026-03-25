@@ -45,8 +45,8 @@ from .strategy import (
 # 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
 
 # 在這裡改策略 <========================
-STRATEGY_NAME = StrategyName.FEDADAGRAD
-DATA_DISTRIBUTION = DataDistribution.LABEL
+STRATEGY_NAME = StrategyName.FEDAVGM
+DATA_DISTRIBUTION = DataDistribution.IID
 DATASET_NAME = DatasetName.MNIST
 
 NUM_ROUNDS = 200
