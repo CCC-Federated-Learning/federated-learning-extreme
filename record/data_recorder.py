@@ -17,7 +17,7 @@ class DataRecorder:
         self.model_name = model_name
 
     def start(self) -> None:
-        self.run_id = datetime.now().strftime(TIMESTAMP_FORMAT) + f"_{STRATEGY_NAME}"
+        self.run_id = datetime.now().strftime(TIMESTAMP_FORMAT) + f"-{STRATEGY_NAME}"
         self.records = []
         self.start_perf = time.perf_counter()
         self.res_dir.mkdir(parents=True, exist_ok=True)
