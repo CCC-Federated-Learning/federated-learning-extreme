@@ -13,6 +13,26 @@
 #
 # For detailed strategy analysis, see: ../STRATEGY_AUDIT_LOG.md
 
+# STRATEGIES_IN_ORDER = [
+#     "fedavg",
+#     "fedavgm",
+#     "fedadagrad",
+#     "fedadam",
+#     "fedprox",
+#     "fedyogi",
+#     "bulyan",
+#     "krum",
+#     "multikrum",
+#     "fedmedian",
+#     "fedtrimmedavg",
+#     "differentialprivacyclientsideadaptiveclipping",
+#     "differentialprivacyclientsidefixedclipping",
+#     "differentialprivacyserversideadaptiveclipping",
+#     "differentialprivacyserversidefixedclipping",
+#     "fedxgbbagging",
+#     "fedxgbcyclic",
+#     "qfedavg",
+# ]
 
 # ============================================================================
 # 1️⃣ FEDAVG - Federated Averaging (Standard FL Baseline)
@@ -516,14 +536,14 @@ XGB_NUM_LOCAL_ROUND = 1
 # ├─ Effect: More rounds→more local model improvement, slower communication
 # └─ Typical: 1-5
 
-XGB_MAX_DEPTH = 6
+XGB_MAX_DEPTH = 2
 # ├─ Purpose: Maximum tree depth in XGBoost
 # ├─ Type: int
 # ├─ Range: [2, 10]
 # ├─ Effect: Deeper trees → higher capacity but overfitting risk
 # └─ Typical: 6-8 for MNIST, 3-5 for small datasets
 
-XGB_ETA = 0.3
+XGB_ETA = 0.01
 # ├─ Purpose: Learning rate (shrinkage factor) for XGBoost
 # ├─ Type: float
 # ├─ Range: [0.01, 1.0]
@@ -533,7 +553,7 @@ XGB_ETA = 0.3
 # │   - 0.5 → fast but risky
 # └─ Typical: 0.3 (default)
 
-XGB_SUBSAMPLE = 1.0
+XGB_SUBSAMPLE = 0.5
 # ├─ Purpose: Fraction of samples to use for each tree
 # ├─ Type: float
 # ├─ Range: [0.5, 1.0]
@@ -542,7 +562,7 @@ XGB_SUBSAMPLE = 1.0
 # │   - 0.8 → sample 80% of data (random forest-like)
 # └─ Typical: 1.0 for federated setting (no subsampling)
 
-XGB_COLSAMPLE_BYTREE = 1.0
+XGB_COLSAMPLE_BYTREE = 0.3
 # ├─ Purpose: Fraction of features to use for each tree
 # ├─ Type: float
 # ├─ Range: [0.3, 1.0]
@@ -551,7 +571,7 @@ XGB_COLSAMPLE_BYTREE = 1.0
 # │   - 0.8 → random 80% of features per tree
 # └─ Typical: 0.8 (prevents overfitting)
 
-XGB_MIN_CHILD_WEIGHT = 1.0
+XGB_MIN_CHILD_WEIGHT = 0.1
 # ├─ Purpose: Minimum sum of weights needed in a child node
 # ├─ Type: float
 # ├─ Range: [0.0, 10.0]
@@ -560,7 +580,7 @@ XGB_MIN_CHILD_WEIGHT = 1.0
 # │   - >5.0 → strong constraint, may underfit
 # └─ Typical: 1.0-5.0
 
-XGB_REG_LAMBDA = 1.0
+XGB_REG_LAMBDA = 10.0
 # ├─ Purpose: L2 regularization weight
 # ├─ Type: float
 # ├─ Range: [0.0, 10.0]

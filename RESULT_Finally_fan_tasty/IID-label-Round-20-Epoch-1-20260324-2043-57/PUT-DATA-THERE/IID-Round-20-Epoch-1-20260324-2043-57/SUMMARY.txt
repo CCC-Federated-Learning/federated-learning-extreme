@@ -1,0 +1,15 @@
+======================================================================
+EXPERIMENT RESULTS SUMMARY
+======================================================================
+
+Directory: IID-Round-20-Epoch-1-20260324-2043-57
+
+Configuration:
+  Data Distribution: IID
+  Training Rounds: 20
+  Local Epochs: 1
+  Run ID: 20260324-2043-57
+
+Contents:
+  - PUT-DATA-THERE/: Raw experimental data from all strategies
+  - generate_charts/: Generated comparison charts and visualizations

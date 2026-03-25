@@ -8,24 +8,24 @@ from pathlib import Path
 # Use lowercase run keys and map them to StrategyName enum attributes.
 STRATEGIES_IN_ORDER = [
     # "fedavg",
-    "fedavgm",
-    "fedadagrad",
-    "fedadam",
-    "fedprox",
-    "fedyogi",
+    # "fedavgm",
+    # "fedadagrad",
+    # "fedadam",
+    # "fedprox",
+    # "fedyogi",
     # "bulyan",
-    "krum",
-    "multikrum",
-    "fedmedian",
+    # "krum",
+    # "multikrum",
+    # "fedmedian",
     # "fedtrimmedavg",
-    "differentialprivacyclientsideadaptiveclipping",
-    "differentialprivacyclientsidefixedclipping",
-    "differentialprivacyserversideadaptiveclipping",
-    "differentialprivacyserversidefixedclipping",
-    # "fedxgbbagging",
-    # "fedxgbcyclic",
-    "qfedavg",
-][::-1]
+    # "differentialprivacyclientsideadaptiveclipping",
+    # "differentialprivacyclientsidefixedclipping",
+    # "differentialprivacyserversideadaptiveclipping",
+    # "differentialprivacyserversidefixedclipping",
+    "fedxgbbagging",
+    "fedxgbcyclic",
+    # "qfedavg",
+]
 
 # Map registry keys to StrategyName enum attribute names (uppercase)
 STRATEGY_KEY_TO_VALUE = {

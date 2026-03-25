@@ -1,6 +1,7 @@
 # Python environment
 .venv/
 venv/
+venv311/
 
 # Python cache / build artifacts
 __pycache__/
@@ -30,3 +31,4 @@ final_model_xgb.json
 # OS files
 .DS_Store
 Thumbs.db
+
