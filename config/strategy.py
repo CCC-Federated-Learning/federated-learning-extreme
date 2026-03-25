@@ -562,7 +562,7 @@ XGB_SUBSAMPLE = 0.5
 # │   - 0.8 → sample 80% of data (random forest-like)
 # └─ Typical: 1.0 for federated setting (no subsampling)
 
-XGB_COLSAMPLE_BYTREE = 0.5
+XGB_COLSAMPLE_BYTREE = 0.3
 # ├─ Purpose: Fraction of features to use for each tree
 # ├─ Type: float
 # ├─ Range: [0.3, 1.0]
@@ -571,7 +571,7 @@ XGB_COLSAMPLE_BYTREE = 0.5
 # │   - 0.8 → random 80% of features per tree
 # └─ Typical: 0.8 (prevents overfitting)
 
-XGB_MIN_CHILD_WEIGHT = 1.5
+XGB_MIN_CHILD_WEIGHT = 0.1
 # ├─ Purpose: Minimum sum of weights needed in a child node
 # ├─ Type: float
 # ├─ Range: [0.0, 10.0]
@@ -580,7 +580,7 @@ XGB_MIN_CHILD_WEIGHT = 1.5
 # │   - >5.0 → strong constraint, may underfit
 # └─ Typical: 1.0-5.0
 
-XGB_REG_LAMBDA = 6.0
+XGB_REG_LAMBDA = 10.0
 # ├─ Purpose: L2 regularization weight
 # ├─ Type: float
 # ├─ Range: [0.0, 10.0]
