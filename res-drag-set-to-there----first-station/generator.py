@@ -58,6 +58,61 @@ class StrategyAnalyzer:
         self.output_dir.mkdir(exist_ok=True)
         self.strategy_data = {}
         self._load_all_data()
+        self.chart_context = self._build_chart_context()
+
+    @staticmethod
+    def _metadata_value(content: str, key: str) -> str:
+        match = re.search(rf'{re.escape(key)}\s*=\s*(.+)', content)
+        return match.group(1).strip() if match else ''
+
+    @staticmethod
+    def _normalize_distribution(distribution: str) -> str:
+        if not distribution:
+            return ''
+        normalized = distribution.strip().lower()
+        mapping = {
+            'iid': 'IID',
+            'label': 'LABEL',
+            'dirichlet': 'DIRICHLET'
+        }
+        return mapping.get(normalized, distribution.strip().upper())
+
+    @staticmethod
+    def _format_maybe_mixed(values: List[str], label: str) -> str:
+        if not values:
+            return f"{label}: Unknown"
+        unique_values = sorted(set(v for v in values if v))
+        if not unique_values:
+            return f"{label}: Unknown"
+        if len(unique_values) == 1:
+            return f"{label}: {unique_values[0]}"
+        return f"{label}: Mixed ({', '.join(unique_values)})"
+
+    def _build_chart_context(self) -> str:
+        distributions = [data.get('distribution', '') for data in self.strategy_data.values()]
+        datasets = [data.get('dataset_name', '') for data in self.strategy_data.values()]
+        rounds = [str(data.get('num_rounds', '')) for data in self.strategy_data.values() if data.get('num_rounds')]
+        epochs = [str(data.get('local_epochs', '')) for data in self.strategy_data.values() if data.get('local_epochs')]
+
+        parts = [
+            self._format_maybe_mixed(datasets, 'Dataset'),
+            self._format_maybe_mixed(distributions, 'Distribution'),
+            self._format_maybe_mixed(rounds, 'Rounds'),
+            self._format_maybe_mixed(epochs, 'Local Epochs')
+        ]
+        return ' | '.join(parts)
+
+    def _apply_context(self, fig):
+        fig.text(
+            0.01,
+            0.01,
+            self.chart_context,
+            ha='left',
+            va='bottom',
+            fontsize=9,
+            color='#444444',
+            bbox=dict(boxstyle='round,pad=0.25', facecolor='#f5f5f5', edgecolor='#cccccc', alpha=0.8)
+        )
 
     def _load_all_data(self):
         """Load metrics and metadata for all strategies."""
@@ -74,6 +129,10 @@ class StrategyAnalyzer:
             # Parse metadata
             strategy = None
             elapsed_seconds = 0
+            distribution = ''
+            dataset_name = ''
+            num_rounds = ''
+            local_epochs = ''
             with open(metadata_path, 'r') as f:
                 content = f.read()
                 match = re.search(r'strategy = (\w+)', content)
@@ -82,6 +141,10 @@ class StrategyAnalyzer:
                 elapsed_match = re.search(r'elapsed_seconds = ([\d.]+)', content)
                 if elapsed_match:
                     elapsed_seconds = float(elapsed_match.group(1))
+                distribution = self._normalize_distribution(self._metadata_value(content, 'data_distribution'))
+                dataset_name = self._metadata_value(content, 'dataset_name')
+                num_rounds = self._metadata_value(content, 'num_rounds')
+                local_epochs = self._metadata_value(content, 'local_epochs')
             
             if not strategy:
                 continue
@@ -92,7 +155,11 @@ class StrategyAnalyzer:
             self.strategy_data[strategy] = {
                 'metrics': df,
                 'time': elapsed_seconds,
-                'subdir': subdir
+                'subdir': subdir,
+                'distribution': distribution,
+                'dataset_name': dataset_name,
+                'num_rounds': num_rounds,
+                'local_epochs': local_epochs
             }
 
     def plot_all_strategies_acc_round(self):
@@ -103,14 +170,17 @@ class StrategyAnalyzer:
             df = data['metrics']
             ax.plot(df['round'], df['accuracy'], marker='o', 
                    color=COLORS.get(strategy, '#000000'),
-                   label=strategy, linewidth=2, markersize=4, alpha=0.8)
+                     label=strategy, linewidth=1.3, markersize=3, alpha=0.8)
         
         ax.set_xlabel('Training Round', fontsize=12, fontweight='bold')
         ax.set_ylabel('Accuracy (%)', fontsize=12, fontweight='bold')
-        ax.set_title('Comprehensive Strategy Comparison: Accuracy over Training Rounds\n(18 Federated Learning Strategies on MNIST-IID)', 
+        ax.set_title(
+                f'Comprehensive Strategy Comparison: Accuracy over Training Rounds\n'
+                f'(18 Federated Learning Strategies)\n{self.chart_context}',
                     fontsize=13, fontweight='bold', pad=20)
         ax.grid(True, alpha=0.3)
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+        self._apply_context(fig)
         
         plt.tight_layout()
         output_path = self.output_dir / '01_acc_round_all_strategies.png'
@@ -178,8 +248,9 @@ class StrategyAnalyzer:
                 'Red shading: Top 3 Best Accuracy  |  Blue shading: Top 3 Fastest (Total Training Time)',
                 ha='center', fontsize=10, style='italic')
         
-        fig.suptitle('Strategy Performance Table: Best Accuracy vs Training Time\n(All 18 Strategies)', 
+        fig.suptitle(f'Strategy Performance Table: Best Accuracy vs Training Time\n(All 18 Strategies)\n{self.chart_context}', 
                     fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
         
         output_path = self.output_dir / '02a_accuracy_time_comparison_table.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
@@ -216,7 +287,7 @@ class StrategyAnalyzer:
                 
                 ax.plot(df['round'], df['accuracy'], marker='o',
                        color=COLORS.get(strategy, '#000000'),
-                       label=display_name, linewidth=2.5, markersize=5, alpha=0.8)
+                      label=display_name, linewidth=1.6, markersize=3, alpha=0.8)
             
             ax.set_xlabel('Training Round', fontsize=10, fontweight='bold')
             ax.set_ylabel('Accuracy', fontsize=10, fontweight='bold')
@@ -230,8 +301,9 @@ class StrategyAnalyzer:
         for idx in range(group_idx, len(axes)):
             axes[idx].axis('off')
         
-        fig.suptitle('Grouped Strategy Analysis: Accuracy over Training Rounds',
+        fig.suptitle(f'Grouped Strategy Analysis: Accuracy over Training Rounds\n{self.chart_context}',
                     fontsize=14, fontweight='bold', y=0.995)
+        self._apply_context(fig)
         
         plt.tight_layout()
         output_path = self.output_dir / '03a_grouped_strategies_comparison.png'
@@ -270,7 +342,7 @@ class StrategyAnalyzer:
                 
                 ax.plot(df['round'], df['accuracy'], marker='s',
                        color=COLORS.get(strategy, '#000000'),
-                       label=display_name, linewidth=2, markersize=4, alpha=0.85)
+                      label=display_name, linewidth=1.6, markersize=3, alpha=0.85)
             
             ax.set_xlabel('Round', fontsize=9, fontweight='bold')
             ax.set_ylabel('Accuracy', fontsize=9, fontweight='bold')
@@ -283,8 +355,9 @@ class StrategyAnalyzer:
         for idx in range(group_idx, len(axes)):
             axes[idx].axis('off')
         
-        fig.suptitle('Grouped Comparison of Strategies by Category',
+        fig.suptitle(f'Grouped Comparison of Strategies by Category\n{self.chart_context}',
                     fontsize=12, fontweight='bold', y=0.995)
+        self._apply_context(fig)
         
         plt.tight_layout()
         output_path = self.output_dir / '03b_grouped_detailed_comparison.png'
@@ -335,10 +408,11 @@ class StrategyAnalyzer:
         ax.set_xticks(positions)
         ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
         ax.set_ylabel('Final Accuracy (%)', fontsize=11, fontweight='bold')
-        ax.set_title('Final Model Accuracy Comparison: All 18 Strategies',
+        ax.set_title(f'Final Model Accuracy Comparison: All 18 Strategies\n{self.chart_context}',
                     fontsize=12, fontweight='bold', pad=15)
         ax.grid(True, alpha=0.3, axis='y')
         ax.set_ylim([0, 105])
+        self._apply_context(fig)
         
         plt.tight_layout()
         output_path = self.output_dir / '04a_final_accuracy_by_group.png'
@@ -406,8 +480,9 @@ class StrategyAnalyzer:
                 'Sorted by Accuracy (Highest to Lowest) | Red shading: Top 3 Best Accuracy  |  Blue shading: Top 3 Fastest',
                 ha='center', fontsize=10, style='italic')
         
-        fig.suptitle('Strategy Performance Table (Sorted by Accuracy)\nBest Accuracy vs Training Time - All 18 Strategies', 
+        fig.suptitle(f'Strategy Performance Table (Sorted by Accuracy)\nBest Accuracy vs Training Time - All 18 Strategies\n{self.chart_context}', 
                     fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
         
         output_path = self.output_dir / '02b_accuracy_time_comparison_table_sorted.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
@@ -473,8 +548,9 @@ class StrategyAnalyzer:
                 'Sorted by Training Time (Fastest to Slowest) | Red shading: Top 3 Best Accuracy  |  Blue shading: Top 3 Fastest Training Time',
                 ha='center', fontsize=10, style='italic')
         
-        fig.suptitle('Strategy Performance Table (Sorted by Training Time)\nBest Accuracy vs Training Time - All 18 Strategies', 
+        fig.suptitle(f'Strategy Performance Table (Sorted by Training Time)\nBest Accuracy vs Training Time - All 18 Strategies\n{self.chart_context}', 
                     fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
         
         output_path = self.output_dir / '02c_accuracy_time_comparison_table_sorted_by_time.png'
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
@@ -516,10 +592,11 @@ class StrategyAnalyzer:
         ax.set_xticks(positions)
         ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
         ax.set_ylabel('Final Accuracy (%)', fontsize=11, fontweight='bold')
-        ax.set_title('Final Model Accuracy Comparison (Sorted by Accuracy)\nAll 18 Strategies - Highest to Lowest Performance',
+        ax.set_title(f'Final Model Accuracy Comparison (Sorted by Accuracy)\nAll 18 Strategies - Highest to Lowest Performance\n{self.chart_context}',
                     fontsize=12, fontweight='bold', pad=15)
         ax.grid(True, alpha=0.3, axis='y')
         ax.set_ylim([0, 105])
+        self._apply_context(fig)
         
         plt.tight_layout()
         output_path = self.output_dir / '04b_final_accuracy_sorted.png'
