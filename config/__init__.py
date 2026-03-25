@@ -45,7 +45,7 @@ from .strategy import (
 # 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
 
 # 在這裡改策略 <========================
-STRATEGY_NAME = StrategyName.FEDADAM
+STRATEGY_NAME = StrategyName.FEDPROX
 DATA_DISTRIBUTION = DataDistribution.IID
 DATASET_NAME = DatasetName.MNIST
 
@@ -78,7 +78,7 @@ def _resolve_strategy_defaults() -> tuple[int, float]:
 DP_NUM_SAMPLED_CLIENTS, QFEDAVG_CLIENT_LEARNING_RATE = _resolve_strategy_defaults()
 
 # Runtime settings
-CLIENT_NUM_CPUS = 1
+CLIENT_NUM_CPUS = 4.0
 CLIENT_NUM_GPUS_IF_AVAILABLE = 0.1
 
 # XGBoost settings

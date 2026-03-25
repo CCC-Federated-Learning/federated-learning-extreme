@@ -9,8 +9,8 @@ from pathlib import Path
 STRATEGIES_IN_ORDER = [
     # "fedavg",
     # "fedavgm",
-    "fedadagrad",
-    "fedadam",
+    # "fedadagrad",
+    # "fedadam",
     "fedprox",
     "fedyogi",
     "bulyan",

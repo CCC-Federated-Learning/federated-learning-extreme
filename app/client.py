@@ -4,14 +4,31 @@ from flwr.clientapp import ClientApp
 from flwr.common.differential_privacy import compute_adaptive_clip_model_update
 from flwr.common.differential_privacy_constants import KEY_CLIPPING_NORM, KEY_NORM_BIT
 
-from config import BATCH_SIZE, DATA_DISTRIBUTION, DIRICHLET_ALPHA, LOCAL_EPOCHS, DATA_SEED
+from config import (
+    BATCH_SIZE,
+    CLIENT_NUM_CPUS,
+    DATA_DISTRIBUTION,
+    DATA_SEED,
+    DIRICHLET_ALPHA,
+    LOCAL_EPOCHS,
+)
 from app.task import Net, load_data, train_fn, test_fn
 
 client_app = ClientApp()
 
+
+def _configure_torch_threads() -> None:
+    """Align PyTorch thread usage with per-client CPU allocation."""
+    num_threads = max(1, int(CLIENT_NUM_CPUS))
+    torch.set_num_threads(num_threads)
+    if hasattr(torch, "set_num_interop_threads"):
+        torch.set_num_interop_threads(num_threads)
+
 @client_app.train()
 def train(msg: Message, context: Context):
     """Train the model on local data."""
+
+    _configure_torch_threads()
 
     # Load the model and initialize it with the received weights
     model = Net()
@@ -89,6 +106,8 @@ def train(msg: Message, context: Context):
 @client_app.evaluate()
 def evaluate(msg: Message, context: Context):
     """Evaluate the model on local data."""
+
+    _configure_torch_threads()
 
     # Load the model and initialize it with the received weights
     model = Net()

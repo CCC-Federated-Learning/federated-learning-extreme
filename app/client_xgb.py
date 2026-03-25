@@ -4,6 +4,7 @@ from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 
 from config import (
+    CLIENT_NUM_CPUS,
     DATA_DISTRIBUTION,
     DATA_SEED,
     DIRICHLET_ALPHA,
@@ -46,6 +47,7 @@ def _booster_to_arrayrecord(booster: xgb.Booster) -> ArrayRecord:
 
 
 def _build_xgb_params(train_lr: float) -> dict:
+    num_threads = max(1, int(CLIENT_NUM_CPUS))
     return {
         "objective": XGB_OBJECTIVE,
         "num_class": XGB_NUM_CLASS,
@@ -56,6 +58,7 @@ def _build_xgb_params(train_lr: float) -> dict:
         "min_child_weight": XGB_MIN_CHILD_WEIGHT,
         "lambda": XGB_REG_LAMBDA,
         "tree_method": "hist",
+        "nthread": num_threads,
         "eval_metric": "mlogloss",
     }
 
