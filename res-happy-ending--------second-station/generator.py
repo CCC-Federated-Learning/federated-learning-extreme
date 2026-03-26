@@ -158,8 +158,13 @@ class IIDLabelComparator:
 				if not run_dir.is_dir():
 					continue
 				metadata_path = run_dir / "metadata.txt"
-				metrics_path = run_dir / "run_metrics.csv"
-				if not metadata_path.exists() or not metrics_path.exists():
+				metrics_csv_path = run_dir / "run_metrics.csv"
+				metrics_json_path = run_dir / "run_metrics.json"
+				
+				# Check for either CSV or JSON
+				if not metadata_path.exists():
+					continue
+				if not (metrics_csv_path.exists() or metrics_json_path.exists()):
 					continue
 
 				meta = parse_metadata(metadata_path)
@@ -173,7 +178,17 @@ class IIDLabelComparator:
 				if distribution not in {"iid", "label"}:
 					continue
 
-				df = pd.read_csv(metrics_path)
+				# Load from CSV if exists, otherwise from JSON
+				if metrics_csv_path.exists():
+					df = pd.read_csv(metrics_csv_path)
+				else:
+					import json
+					with open(metrics_json_path, "r") as f:
+						json_data = json.load(f)
+						if isinstance(json_data, dict) and "rounds" in json_data:
+							json_data = json_data["rounds"]
+						df = pd.DataFrame(json_data)
+				
 				if not {"round", "accuracy"}.issubset(df.columns):
 					continue
 
@@ -348,6 +363,51 @@ class IIDLabelComparator:
 
 		return pd.DataFrame(rows)
 
+	def build_best_vs_final_delta_table(self) -> pd.DataFrame:
+		"""Build table with best history vs final round accuracy delta for both IID and Label."""
+		rows: list[dict[str, object]] = []
+		group_lookup = {s: g for g, ss in STRATEGY_GROUPS.items() for s in ss}
+
+		for strategy in STRATEGY_ORDER:
+			iid_best = np.nan
+			iid_final = np.nan
+			iid_delta = np.nan
+			label_best = np.nan
+			label_final = np.nan
+			label_delta = np.nan
+			iid_vs_label_delta = np.nan
+			
+			if strategy in self.data["iid"]:
+				df_iid = self.data["iid"][strategy]["df"]
+				iid_best = float(df_iid["accuracy"].max()) * 100.0
+				iid_final = float(df_iid["accuracy"].iloc[-1]) * 100.0
+				iid_delta = iid_best - iid_final  # best minus final
+			
+			if strategy in self.data["label"]:
+				df_label = self.data["label"][strategy]["df"]
+				label_best = float(df_label["accuracy"].max()) * 100.0
+				label_final = float(df_label["accuracy"].iloc[-1]) * 100.0
+				label_delta = label_best - label_final  # best minus final
+			
+			if not (np.isnan(iid_final) or np.isnan(label_final)):
+				iid_vs_label_delta = label_final - iid_final
+
+			rows.append(
+				{
+					"group": group_lookup.get(strategy, "Unknown"),
+					"strategy": strategy,
+					"iid_best_acc": iid_best,
+					"iid_final_acc": iid_final,
+					"iid_best_vs_final_delta": iid_delta,
+					"label_best_acc": label_best,
+					"label_final_acc": label_final,
+					"label_best_vs_final_delta": label_delta,
+					"iid_vs_label_final_delta": iid_vs_label_delta,
+				}
+			)
+
+		return pd.DataFrame(rows)
+
 	def _render_table_png(self, df: pd.DataFrame, output_name: str, title: str) -> None:
 		render_df = df.copy()
 		render_df["iid_final_acc"] = render_df["iid_final_acc"].map(lambda x: "-" if pd.isna(x) else f"{x:.2f}%")
@@ -392,6 +452,85 @@ class IIDLabelComparator:
 			"Red shading: Top-3 largest positive Delta (Label - IID)",
 			ha="center",
 			fontsize=10,
+			style="italic",
+		)
+		plt.tight_layout()
+		plt.savefig(self.output_root / output_name, dpi=160, bbox_inches="tight")
+		plt.close()
+
+	def _render_best_vs_final_table_png(self, df: pd.DataFrame, output_name: str, title: str) -> None:
+		"""Render table with best history vs final round accuracy delta."""
+		render_df = df.copy()
+		
+		# Format all numeric columns - keep original for highlighting logic
+		formatted_df = render_df.copy()
+		for col in ["iid_best_acc", "iid_final_acc", "iid_best_vs_final_delta", 
+					"label_best_acc", "label_final_acc", "label_best_vs_final_delta", 
+					"iid_vs_label_final_delta"]:
+			if col in formatted_df.columns:
+				if "delta" in col:
+					formatted_df[col] = formatted_df[col].map(lambda x: "-" if pd.isna(x) else f"{x:+.2f}%")
+				else:
+					formatted_df[col] = formatted_df[col].map(lambda x: "-" if pd.isna(x) else f"{x:.2f}%")
+		
+		fig, ax = plt.subplots(figsize=(20, 12))
+		ax.axis("off")
+		
+		table_data = formatted_df[[
+			"group", "strategy", 
+			"iid_best_acc", "iid_final_acc", "iid_best_vs_final_delta",
+			"label_best_acc", "label_final_acc", "label_best_vs_final_delta",
+			"iid_vs_label_final_delta"
+		]].values.tolist()
+		
+		col_labels = [
+			"Group", "Strategy",
+			"IID Best", "IID Final", "IID Δ(B-F)",
+			"Label Best", "Label Final", "Label Δ(B-F)", 
+			"Δ(Label-IID)"
+		]
+		
+		# Find top deltas for highlighting
+		iid_delta = df["iid_best_vs_final_delta"].copy()
+		label_delta = df["label_best_vs_final_delta"].copy()
+		iid_final_delta = df["iid_vs_label_final_delta"].copy()
+		
+		top3_iid_delta_idx = set(iid_delta.dropna().nlargest(3).index.tolist()) if len(iid_delta.dropna()) > 0 else set()
+		top3_label_delta_idx = set(label_delta.dropna().nlargest(3).index.tolist()) if len(label_delta.dropna()) > 0 else set()
+		top3_iid_vs_label_idx = set(iid_final_delta.dropna().nlargest(3).index.tolist()) if len(iid_final_delta.dropna()) > 0 else set()
+		
+		cell_colors = [["#ffffff"] * len(col_labels) for _ in table_data]
+		for i, row_idx in enumerate(df.index.tolist()):
+			if row_idx in top3_iid_delta_idx:
+				cell_colors[i][4] = "#ffe6e6"  # Light red for IID delta
+			if row_idx in top3_label_delta_idx:
+				cell_colors[i][7] = "#ffe6e6"  # Light red for Label delta
+			if row_idx in top3_iid_vs_label_idx:
+				cell_colors[i][8] = "#ffcccc"  # Darker red for IID vs Label
+		
+		table = ax.table(
+			cellText=table_data,
+			colLabels=col_labels,
+			cellLoc="center",
+			loc="center",
+			cellColours=cell_colors,
+			colColours=["#e6e6e6"] * len(col_labels),
+		)
+		table.auto_set_font_size(False)
+		table.set_fontsize(7.5)
+		table.scale(1, 1.8)
+		
+		for c in range(len(col_labels)):
+			table[(0, c)].set_facecolor("#8a8a8a")
+			table[(0, c)].set_text_props(weight="bold", color="white")
+		
+		fig.suptitle(title, fontsize=13, fontweight="bold")
+		fig.text(
+			0.5,
+			0.02,
+			"Light Red: Top-3 Largest Best-vs-Final Delta | Dark Red: Top-3 Largest IID-vs-Label Final Delta",
+			ha="center",
+			fontsize=9,
 			style="italic",
 		)
 		plt.tight_layout()
@@ -785,6 +924,201 @@ class IIDLabelComparator:
 			"Final Accuracy Delta Sorted (Label - IID)",
 		)
 
+	def make_best_vs_final_tables(self) -> None:
+		"""Generate tables showing best history vs final round accuracy delta."""
+		df = self.build_best_vs_final_delta_table()
+		group_order = {g: i for i, g in enumerate(STRATEGY_GROUPS.keys())}
+		
+		# Grouped by category
+		df_grouped = df.copy()
+		df_grouped["_g"] = df_grouped["group"].map(lambda g: group_order.get(g, 999))
+		df_grouped["_s"] = df_grouped["strategy"].map(lambda s: self.strategy_index.get(s, 999))
+		df_grouped = df_grouped.sort_values(["_g", "_s"]).drop(columns=["_g", "_s"])
+		
+		# Sorted by best-vs-final delta (IID)
+		df_sorted_iid = df.sort_values("iid_best_vs_final_delta", ascending=False)
+		
+		# Sorted by best-vs-final delta (Label)
+		df_sorted_label = df.sort_values("label_best_vs_final_delta", ascending=False)
+		
+		# Save to CSV
+		df_grouped.to_csv(self.output_root / "05a_best_vs_final_delta_by_group.csv", index=False)
+		df_sorted_iid.to_csv(self.output_root / "05b_best_vs_final_delta_sorted_iid.csv", index=False)
+		df_sorted_label.to_csv(self.output_root / "05c_best_vs_final_delta_sorted_label.csv", index=False)
+		
+		# Render tables
+		self._render_best_vs_final_table_png(
+			df_grouped,
+			"05a_table_best_vs_final_delta_grouped.png",
+			"Best History vs Final Round Accuracy: Grouped by Category",
+		)
+		self._render_best_vs_final_table_png(
+			df_sorted_iid,
+			"05b_table_best_vs_final_delta_sorted_iid.png",
+			"Best History vs Final Round Accuracy: Sorted by IID Delta",
+		)
+		self._render_best_vs_final_table_png(
+			df_sorted_label,
+			"05c_table_best_vs_final_delta_sorted_label.png",
+			"Best History vs Final Round Accuracy: Sorted by Label Delta",
+		)
+
+	def plot_best_vs_final_bar_chart_sorted_by_delta(self) -> None:
+		"""Plot bar chart of best vs final accuracy delta, sorted by combined delta."""
+		df = self.build_best_vs_final_delta_table()
+		# Calculate average delta across IID and Label (only where both exist)
+		df["avg_delta"] = df.apply(
+			lambda row: (row["iid_best_vs_final_delta"] + row["label_best_vs_final_delta"]) / 2 
+			if not (np.isnan(row["iid_best_vs_final_delta"]) or np.isnan(row["label_best_vs_final_delta"])) 
+			else np.nanmax([row["iid_best_vs_final_delta"], row["label_best_vs_final_delta"]]),
+			axis=1
+		)
+		df_sorted = df.sort_values("avg_delta", ascending=False)
+		
+		fig, ax = plt.subplots(figsize=(18, 7))
+		x_pos = np.arange(len(df_sorted))
+		bar_width = 0.35
+		
+		strategies = df_sorted["strategy"].values
+		iid_deltas = df_sorted["iid_best_vs_final_delta"].values
+		label_deltas = df_sorted["label_best_vs_final_delta"].values
+		
+		# Replace NaN with 0 for plotting (but we'll handle them in labels)
+		iid_deltas_plot = np.nan_to_num(iid_deltas, nan=0.0)
+		label_deltas_plot = np.nan_to_num(label_deltas, nan=0.0)
+		
+		bars1 = ax.bar(
+			x_pos - bar_width/2,
+			iid_deltas_plot,
+			bar_width,
+			label="IID (Best - Final)",
+			color="#FF9999",
+			alpha=0.85,
+			edgecolor="black",
+			linewidth=0.5,
+		)
+		bars2 = ax.bar(
+			x_pos + bar_width/2,
+			label_deltas_plot,
+			bar_width,
+			label="Label (Best - Final)",
+			color="#99CCFF",
+			alpha=0.85,
+			edgecolor="black",
+			linewidth=0.5,
+		)
+		
+		# Add value labels on bars (only if not NaN)
+		for i, (iid_d, label_d, x) in enumerate(zip(iid_deltas, label_deltas, x_pos)):
+			if not np.isnan(iid_d) and iid_d > 0.1:
+				ax.text(x - bar_width/2, iid_d + 0.2, f"{iid_d:.1f}", 
+					   ha="center", va="bottom", fontsize=7, color="#333333")
+			if not np.isnan(label_d) and label_d > 0.1:
+				ax.text(x + bar_width/2, label_d + 0.2, f"{label_d:.1f}", 
+					   ha="center", va="bottom", fontsize=7, color="#333333")
+		
+		short_names = [short_name(s) for s in strategies]
+		ax.set_xticks(x_pos)
+		ax.set_xticklabels(short_names, rotation=45, ha="right", fontsize=9)
+		
+		ax.set_ylabel("Accuracy Loss (%)", fontsize=11, fontweight="bold")
+		ax.set_title(
+			"Best vs Final Round Accuracy Delta (Sorted by Average Delta)\n[Higher = More Loss from Peak to Final]",
+			fontsize=13,
+			fontweight="bold",
+			pad=15
+		)
+		
+		ax.grid(True, axis="y", alpha=0.3, linestyle="--")
+		ax.legend(fontsize=11, loc="upper right", framealpha=0.95)
+		ax.set_ylim(bottom=0, top=max(np.nanmax(iid_deltas), np.nanmax(label_deltas)) * 1.15 if len(iid_deltas) > 0 else 50)
+		
+		plt.tight_layout()
+		plt.savefig(self.output_root / "06a_bar_chart_best_vs_final_sorted_by_delta.png", dpi=160, bbox_inches="tight")
+		plt.close()
+
+	def plot_best_vs_final_bar_chart_by_distribution(self, distribution: str) -> None:
+		"""Plot bar chart of best vs final accuracy delta, sorted by specific distribution."""
+		df = self.build_best_vs_final_delta_table()
+		
+		if distribution.lower() == "iid":
+			df_sorted = df.sort_values("iid_best_vs_final_delta", ascending=False, na_position="last")
+			delta_col = "iid_best_vs_final_delta"
+			filename = "06b_bar_chart_best_vs_final_sorted_by_iid.png"
+			title = "Best vs Final Round Accuracy Delta (IID Distribution)"
+			color1 = "#FF9999"
+			color2 = "#99CCFF"
+		else:
+			df_sorted = df.sort_values("label_best_vs_final_delta", ascending=False, na_position="last")
+			delta_col = "label_best_vs_final_delta"
+			filename = "06c_bar_chart_best_vs_final_sorted_by_label.png"
+			title = "Best vs Final Round Accuracy Delta (Label Distribution)"
+			color1 = "#FF9999"
+			color2 = "#99CCFF"
+		
+		fig, ax = plt.subplots(figsize=(18, 7))
+		x_pos = np.arange(len(df_sorted))
+		bar_width = 0.35
+		
+		strategies = df_sorted["strategy"].values
+		iid_deltas = df_sorted["iid_best_vs_final_delta"].values
+		label_deltas = df_sorted["label_best_vs_final_delta"].values
+		
+		# Replace NaN with 0 for plotting
+		iid_deltas_plot = np.nan_to_num(iid_deltas, nan=0.0)
+		label_deltas_plot = np.nan_to_num(label_deltas, nan=0.0)
+		
+		bars1 = ax.bar(
+			x_pos - bar_width/2,
+			iid_deltas_plot,
+			bar_width,
+			label="IID (Best - Final)",
+			color=color1,
+			alpha=0.85,
+			edgecolor="black",
+			linewidth=0.5,
+		)
+		bars2 = ax.bar(
+			x_pos + bar_width/2,
+			label_deltas_plot,
+			bar_width,
+			label="Label (Best - Final)",
+			color=color2,
+			alpha=0.85,
+			edgecolor="black",
+			linewidth=0.5,
+		)
+		
+		# Add value labels on bars (only if not NaN)
+		for i, (iid_d, label_d, x) in enumerate(zip(iid_deltas, label_deltas, x_pos)):
+			if not np.isnan(iid_d) and iid_d > 0.1:
+				ax.text(x - bar_width/2, iid_d + 0.2, f"{iid_d:.1f}", 
+					   ha="center", va="bottom", fontsize=7, color="#333333")
+			if not np.isnan(label_d) and label_d > 0.1:
+				ax.text(x + bar_width/2, label_d + 0.2, f"{label_d:.1f}", 
+					   ha="center", va="bottom", fontsize=7, color="#333333")
+		
+		short_names = [short_name(s) for s in strategies]
+		ax.set_xticks(x_pos)
+		ax.set_xticklabels(short_names, rotation=45, ha="right", fontsize=9)
+		
+		ax.set_ylabel("Accuracy Loss (%)", fontsize=11, fontweight="bold")
+		ax.set_title(
+			f"{title}\n[Higher = More Loss from Peak to Final]",
+			fontsize=13,
+			fontweight="bold",
+			pad=15
+		)
+		
+		ax.grid(True, axis="y", alpha=0.3, linestyle="--")
+		ax.legend(fontsize=11, loc="upper right", framealpha=0.95)
+		max_delta = np.nanmax(np.concatenate([iid_deltas, label_deltas]))
+		ax.set_ylim(bottom=0, top=max_delta * 1.15 if not np.isnan(max_delta) else 50)
+		
+		plt.tight_layout()
+		plt.savefig(self.output_root / filename, dpi=160, bbox_inches="tight")
+		plt.close()
+
 	def run(self) -> None:
 		self.load()
 		self.plot_all_18x2()
@@ -795,6 +1129,10 @@ class IIDLabelComparator:
 		self.plot_bar_chart_sorted_by_label()
 		self.make_table_grouped_by_category()
 		self.make_tables()
+		self.make_best_vs_final_tables()
+		self.plot_best_vs_final_bar_chart_sorted_by_delta()
+		self.plot_best_vs_final_bar_chart_by_distribution("iid")
+		self.plot_best_vs_final_bar_chart_by_distribution("label")
 		print(f"Saved outputs to: {self.output_root}")
 
 

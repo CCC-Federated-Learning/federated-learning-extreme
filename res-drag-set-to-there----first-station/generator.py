@@ -604,6 +604,314 @@ class StrategyAnalyzer:
         print(f"✓ Saved: {output_path.name}")
         plt.close()
 
+    def plot_final_round_accuracy_time_table(self):
+        """Create a comparison table of final round accuracy and training time."""
+        fig, ax = plt.subplots(figsize=(16, 10))
+        ax.axis('tight')
+        ax.axis('off')
+        
+        # Prepare data using final round accuracy
+        table_data = []
+        strategies_list = sorted(self.strategy_data.keys())
+        
+        for strategy in strategies_list:
+            data = self.strategy_data[strategy]
+            final_round_acc = data['metrics']['accuracy'].iloc[-1] * 100
+            time = data['time']
+            table_data.append([strategy, f"{final_round_acc:.2f}%", f"{time:.2f}s"])
+        
+        # Sort by final round accuracy descending to find top 3
+        table_data_sorted = sorted(table_data, key=lambda x: float(x[1].rstrip('%')), reverse=True)
+        
+        # Find top 3 in each category
+        top_3_acc = set(row[0] for row in table_data_sorted[:3])
+        top_3_time = set(strategies_list[i] for i in np.argsort([self.strategy_data[s]['time'] for s in strategies_list])[:3])
+        
+        # Create colors for cells
+        cell_colors = []
+        for row in table_data:
+            strategy = row[0]
+            colors = []
+            colors.append('#ffffff')  # strategy name
+            
+            # Accuracy cell - red if top 3
+            acc_color = '#ffcccc' if strategy in top_3_acc else '#ffffff'
+            colors.append(acc_color)
+            
+            # Time cell - blue if top 3 (fastest)
+            time_color = '#ccccff' if strategy in top_3_time else '#ffffff'
+            colors.append(time_color)
+            
+            cell_colors.append(colors)
+        
+        columns = ['Strategy', 'Final Round Accuracy', 'Training Time']
+        table = ax.table(cellText=table_data, colLabels=columns, 
+                        cellLoc='center', loc='center',
+                        cellColours=cell_colors,
+                        colColours=['#e6e6e6']*3)
+        
+        table.auto_set_font_size(False)
+        table.set_fontsize(9)
+        table.scale(1, 2.5)
+        
+        # Color header
+        for i in range(3):
+            table[(0, i)].set_facecolor('#999999')
+            table[(0, i)].set_text_props(weight='bold', color='white')
+        
+        # Add legend
+        fig.text(0.5, 0.05, 
+                'Red shading: Top 3 Final Round Accuracy  |  Blue shading: Top 3 Fastest (Total Training Time)',
+                ha='center', fontsize=10, style='italic')
+        
+        fig.suptitle(f'Strategy Performance Table (Final Round Accuracy): Final Round Accuracy vs Training Time\n(All 18 Strategies)\n{self.chart_context}', 
+                    fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
+        
+        output_path = self.output_dir / '05a_final_round_accuracy_time_comparison_table.png'
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Saved: {output_path.name}")
+        plt.close()
+
+    def plot_final_round_accuracy_time_table_sorted(self):
+        """Create a comparison table sorted by final round accuracy (highest to lowest)."""
+        fig, ax = plt.subplots(figsize=(16, 10))
+        ax.axis('tight')
+        ax.axis('off')
+        
+        # Prepare data using final round accuracy
+        table_data = []
+        for strategy in sorted(self.strategy_data.keys()):
+            data = self.strategy_data[strategy]
+            final_round_acc = data['metrics']['accuracy'].iloc[-1] * 100
+            time = data['time']
+            table_data.append([strategy, f"{final_round_acc:.2f}%", f"{time:.2f}s"])
+        
+        # Sort by final round accuracy descending
+        table_data_sorted = sorted(table_data, key=lambda x: float(x[1].rstrip('%')), reverse=True)
+        
+        # Find top 3 in each category
+        top_3_acc = set(row[0] for row in table_data_sorted[:3])
+        strategies_list = [row[0] for row in table_data_sorted]
+        times_sorted = sorted([(row[0], float(row[2].rstrip('s'))) for row in table_data_sorted], key=lambda x: x[1])
+        top_3_time = set(s for s, _ in times_sorted[:3])
+        
+        # Create colors for cells
+        cell_colors = []
+        for row in table_data_sorted:
+            strategy = row[0]
+            colors = []
+            colors.append('#ffffff')  # strategy name
+            
+            # Accuracy cell - red if top 3
+            acc_color = '#ffcccc' if strategy in top_3_acc else '#ffffff'
+            colors.append(acc_color)
+            
+            # Time cell - blue if top 3 (fastest)
+            time_color = '#ccccff' if strategy in top_3_time else '#ffffff'
+            colors.append(time_color)
+            
+            cell_colors.append(colors)
+        
+        columns = ['Strategy', 'Final Round Accuracy', 'Training Time']
+        table = ax.table(cellText=table_data_sorted, colLabels=columns, 
+                        cellLoc='center', loc='center',
+                        cellColours=cell_colors,
+                        colColours=['#e6e6e6']*3)
+        
+        table.auto_set_font_size(False)
+        table.set_fontsize(9)
+        table.scale(1, 2.5)
+        
+        # Color header
+        for i in range(3):
+            table[(0, i)].set_facecolor('#999999')
+            table[(0, i)].set_text_props(weight='bold', color='white')
+        
+        # Add legend
+        fig.text(0.5, 0.05, 
+                'Sorted by Final Round Accuracy (Highest to Lowest) | Red shading: Top 3 Final Round Accuracy  |  Blue shading: Top 3 Fastest',
+                ha='center', fontsize=10, style='italic')
+        
+        fig.suptitle(f'Strategy Performance Table (Sorted by Final Round Accuracy)\nFinal Round Accuracy vs Training Time - All 18 Strategies\n{self.chart_context}', 
+                    fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
+        
+        output_path = self.output_dir / '05b_final_round_accuracy_time_comparison_table_sorted.png'
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Saved: {output_path.name}")
+        plt.close()
+
+    def plot_final_round_accuracy_time_table_sorted_by_time(self):
+        """Create a comparison table sorted by training time (fastest to slowest) - using final round accuracy."""
+        fig, ax = plt.subplots(figsize=(16, 10))
+        ax.axis('tight')
+        ax.axis('off')
+        
+        # Prepare data using final round accuracy
+        table_data = []
+        for strategy in sorted(self.strategy_data.keys()):
+            data = self.strategy_data[strategy]
+            final_round_acc = data['metrics']['accuracy'].iloc[-1] * 100
+            time = data['time']
+            table_data.append([strategy, f"{final_round_acc:.2f}%", f"{time:.2f}s"])
+        
+        # Sort by time ascending (fastest first)
+        table_data_sorted = sorted(table_data, key=lambda x: float(x[2].rstrip('s')))
+        
+        # Find top 3 in each category
+        acc_sorted = sorted([(row[0], float(row[1].rstrip('%'))) for row in table_data_sorted], key=lambda x: x[1], reverse=True)
+        top_3_acc = set(s for s, _ in acc_sorted[:3])
+        top_3_time = set(row[0] for row in table_data_sorted[:3])
+        
+        # Create colors for cells
+        cell_colors = []
+        for row in table_data_sorted:
+            strategy = row[0]
+            colors = []
+            colors.append('#ffffff')  # strategy name
+            
+            # Accuracy cell - red if top 3
+            acc_color = '#ffcccc' if strategy in top_3_acc else '#ffffff'
+            colors.append(acc_color)
+            
+            # Time cell - blue if top 3 (fastest)
+            time_color = '#ccccff' if strategy in top_3_time else '#ffffff'
+            colors.append(time_color)
+            
+            cell_colors.append(colors)
+        
+        columns = ['Strategy', 'Final Round Accuracy', 'Training Time']
+        table = ax.table(cellText=table_data_sorted, colLabels=columns, 
+                        cellLoc='center', loc='center',
+                        cellColours=cell_colors,
+                        colColours=['#e6e6e6']*3)
+        
+        table.auto_set_font_size(False)
+        table.set_fontsize(9)
+        table.scale(1, 2.5)
+        
+        # Color header
+        for i in range(3):
+            table[(0, i)].set_facecolor('#999999')
+            table[(0, i)].set_text_props(weight='bold', color='white')
+        
+        # Add legend
+        fig.text(0.5, 0.05, 
+                'Sorted by Training Time (Fastest to Slowest) | Red shading: Top 3 Final Round Accuracy  |  Blue shading: Top 3 Fastest Training Time',
+                ha='center', fontsize=10, style='italic')
+        
+        fig.suptitle(f'Strategy Performance Table (Sorted by Training Time)\nFinal Round Accuracy vs Training Time - All 18 Strategies\n{self.chart_context}', 
+                    fontsize=13, fontweight='bold', y=0.98)
+        self._apply_context(fig)
+        
+        output_path = self.output_dir / '05c_final_round_accuracy_time_comparison_table_sorted_by_time.png'
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Saved: {output_path.name}")
+        plt.close()
+
+    def plot_final_round_accuracy_boxplot(self):
+        """Plot final round accuracy comparison as bar chart grouped by category."""
+        fig, ax = plt.subplots(figsize=(15, 7))
+        
+        positions = []
+        final_accs = []
+        colors_list = []
+        labels = []
+        pos = 0
+        
+        group_spacing = 1.5
+        
+        for group_name, strategies in STRATEGY_GROUPS.items():
+            available_strategies = [s for s in strategies if s in self.strategy_data]
+            
+            if not available_strategies:
+                continue
+            
+            for strategy in available_strategies:
+                data = self.strategy_data[strategy]
+                final_round_acc = data['metrics']['accuracy'].iloc[-1] * 100
+                
+                positions.append(pos)
+                final_accs.append(final_round_acc)
+                colors_list.append(COLORS.get(strategy, '#000000'))
+                
+                display_label = DP_SHORT_NAMES.get(strategy, strategy)
+                labels.append(display_label)
+                pos += 1
+            
+            pos += group_spacing - 1
+        
+        bars = ax.bar(positions, final_accs, color=colors_list, alpha=0.8, edgecolor='black', linewidth=1.2)
+        
+        # Add value labels on bars
+        for bar, acc in zip(bars, final_accs):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{acc:.1f}%', ha='center', va='bottom', fontsize=8)
+        
+        ax.set_xticks(positions)
+        ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
+        ax.set_ylabel('Final Round Accuracy (%)', fontsize=11, fontweight='bold')
+        ax.set_title(f'Final Round Model Accuracy Comparison: All 18 Strategies\n{self.chart_context}',
+                    fontsize=12, fontweight='bold', pad=15)
+        ax.grid(True, alpha=0.3, axis='y')
+        ax.set_ylim([0, 105])
+        self._apply_context(fig)
+        
+        plt.tight_layout()
+        output_path = self.output_dir / '06a_final_round_accuracy_by_group.png'
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Saved: {output_path.name}")
+        plt.close()
+
+    def plot_final_round_accuracy_sorted(self):
+        """Plot final round accuracy comparison sorted by accuracy (highest to lowest)."""
+        fig, ax = plt.subplots(figsize=(15, 7))
+        
+        # Collect all strategies with their final round accuracy
+        strategy_acc_list = []
+        for strategy in self.strategy_data.keys():
+            data = self.strategy_data[strategy]
+            final_round_acc = data['metrics']['accuracy'].iloc[-1] * 100
+            strategy_acc_list.append((strategy, final_round_acc))
+        
+        # Sort by accuracy descending
+        strategy_acc_list.sort(key=lambda x: x[1], reverse=True)
+        
+        positions = list(range(len(strategy_acc_list)))
+        final_accs = [acc for _, acc in strategy_acc_list]
+        labels = []
+        colors_list = []
+        
+        for strategy, _ in strategy_acc_list:
+            display_label = DP_SHORT_NAMES.get(strategy, strategy)
+            labels.append(display_label)
+            colors_list.append(COLORS.get(strategy, '#000000'))
+        
+        bars = ax.bar(positions, final_accs, color=colors_list, alpha=0.8, edgecolor='black', linewidth=1.2)
+        
+        # Add value labels on bars
+        for bar, acc in zip(bars, final_accs):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{acc:.1f}%', ha='center', va='bottom', fontsize=8)
+        
+        ax.set_xticks(positions)
+        ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
+        ax.set_ylabel('Final Round Accuracy (%)', fontsize=11, fontweight='bold')
+        ax.set_title(f'Final Round Model Accuracy Comparison (Sorted by Accuracy)\nAll 18 Strategies - Highest to Lowest Performance\n{self.chart_context}',
+                    fontsize=12, fontweight='bold', pad=15)
+        ax.grid(True, alpha=0.3, axis='y')
+        ax.set_ylim([0, 105])
+        self._apply_context(fig)
+        
+        plt.tight_layout()
+        output_path = self.output_dir / '06b_final_round_accuracy_sorted.png'
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Saved: {output_path.name}")
+        plt.close()
+
     def generate_all_charts(self):
         """Generate all charts in sequence."""
         print("\n" + "="*60)
@@ -613,10 +921,10 @@ class StrategyAnalyzer:
         print("\n01. Generating all-strategies accuracy curve...")
         self.plot_all_strategies_acc_round()
         
-        print("02a. Generating accuracy-time comparison table...")
+        print("02a. Generating accuracy-time comparison table (best accuracy)...")
         self.plot_accuracy_time_table()
         
-        print("02b. Generating sorted accuracy-time comparison table (by accuracy)...")
+        print("02b. Generating sorted accuracy-time comparison table (by best accuracy)...")
         self.plot_accuracy_time_table_sorted()
         
         print("02c. Generating sorted accuracy-time comparison table (by time)...")
@@ -633,6 +941,21 @@ class StrategyAnalyzer:
         
         print("04b. Generating final accuracy comparison (sorted)...")
         self.plot_final_accuracy_sorted()
+        
+        print("05a. Generating final round accuracy-time comparison table...")
+        self.plot_final_round_accuracy_time_table()
+        
+        print("05b. Generating sorted final round accuracy-time comparison table (by accuracy)...")
+        self.plot_final_round_accuracy_time_table_sorted()
+        
+        print("05c. Generating sorted final round accuracy-time comparison table (by time)...")
+        self.plot_final_round_accuracy_time_table_sorted_by_time()
+        
+        print("06a. Generating final round accuracy comparison...")
+        self.plot_final_round_accuracy_boxplot()
+        
+        print("06b. Generating final round accuracy comparison (sorted)...")
+        self.plot_final_round_accuracy_sorted()
         
         print("\n" + "="*60)
         print(f"✓ All charts saved to: {self.output_dir}")
