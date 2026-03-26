@@ -171,11 +171,11 @@ DATA_DISTRIBUTION = DataDistribution.IID  # IID / LABEL_SKEW / DIRICHLET
           │
           ▼
 ┌────────────────────────────────────────┐
-│ 🚩 FIRST STATION (Drag-Set-To-There)  │
+│ 🚩 FIRST STATION (Drag-Set-To-There)   │
 │ ════════════════════════════════════   │
-│ 職責：收集、清理、驗證 18 策略的結果 │
-│ 輸出：PUT-DATA-THERE/                 │
-│ 狀態：✅ 自動化完成                   │
+│ 職責：收集、清理、驗證 18 策略的結果      │
+│ 輸出：PUT-DATA-THERE/                   │
+│ 狀態：✅ 自動化完成                     │
 └─────────┬──────────────────────────────┘
           │
           ▼
