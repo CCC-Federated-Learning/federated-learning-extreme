@@ -24,7 +24,7 @@ STRATEGIES_IN_ORDER = [
     "differentialprivacyserversidefixedclipping",
     # "fedxgbbagging",
     # "fedxgbcyclic",
-    "qfedavg",
+    # "qfedavg",
 ]
 
 # Map registry keys to StrategyName enum attribute names (uppercase)
