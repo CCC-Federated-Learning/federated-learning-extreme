@@ -45,7 +45,7 @@ from .strategy import (
 # 7) Reproducibility: keep DATA_SEED fixed; change it only for new random splits.
 
 # 在這裡改策略 <========================
-STRATEGY_NAME = StrategyName.QFEDAVG
+STRATEGY_NAME = StrategyName.DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING
 DATA_DISTRIBUTION = DataDistribution.IID
 DATASET_NAME = DatasetName.MNIST
 

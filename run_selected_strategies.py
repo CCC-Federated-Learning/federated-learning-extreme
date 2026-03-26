@@ -14,17 +14,17 @@ STRATEGIES_IN_ORDER = [
     # "fedprox",
     # "fedyogi",
     # "bulyan",
-    "krum",
+    # "krum",
     "multikrum",
-    "fedmedian",
-    "fedtrimmedavg",
+    # "fedmedian",
+    # "fedtrimmedavg",
     "differentialprivacyclientsideadaptiveclipping",
     "differentialprivacyclientsidefixedclipping",
     "differentialprivacyserversideadaptiveclipping",
     "differentialprivacyserversidefixedclipping",
     # "fedxgbbagging",
     # "fedxgbcyclic",
-    # "qfedavg",
+    "qfedavg",
 ]
 
 # Map registry keys to StrategyName enum attribute names (uppercase)
