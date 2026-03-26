@@ -1,0 +1,26 @@
+# Common
+run_id = 20260326-1922-55-DifferentialPrivacyClientSideAdaptiveClipping
+title = MNIST-IID-DifferentialPrivacyClientSideAdaptiveClipping
+model_name = Net
+dataset_name = MNIST
+data_distribution = IID
+strategy = DifferentialPrivacyClientSideAdaptiveClipping
+num_rounds = 200
+local_epochs = 3
+batch_size = 64
+learning_rate = 0.001
+fraction_train = 1.0
+fraction_evaluate = 1
+dirichlet_alpha = 0.5
+data_seed = 499
+num_partitions = 10
+elapsed_seconds = 5405.73
+
+# StrategySpecific
+dp_clip_norm_lr = 0.2
+dp_clipped_count_stddev = None
+dp_clipping_norm = 1.0
+dp_initial_clipping_norm = 0.1
+dp_noise_multiplier = 0.5
+dp_num_sampled_clients = 10
+dp_target_clipped_quantile = 0.5

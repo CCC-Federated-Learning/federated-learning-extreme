@@ -1,0 +1,15 @@
+======================================================================
+EXPERIMENT RESULTS SUMMARY
+======================================================================
+
+Directory: IID-Round-200-Epoch-3-20260325-1916-22-FedAvg
+
+Configuration:
+  Data Distribution: IID
+  Training Rounds: 200
+  Local Epochs: 3
+  Run ID: 20260325-1916-22-FedAvg
+
+Contents:
+  - PUT-DATA-THERE/: Raw experimental data from all strategies
+  - generate_charts/: Generated comparison charts and visualizations
