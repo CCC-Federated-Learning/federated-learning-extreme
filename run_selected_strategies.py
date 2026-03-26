@@ -22,8 +22,8 @@ STRATEGIES_IN_ORDER = [
     "differentialprivacyclientsidefixedclipping",
     "differentialprivacyserversideadaptiveclipping",
     "differentialprivacyserversidefixedclipping",
-    "fedxgbbagging",
-    "fedxgbcyclic",
+    # "fedxgbbagging",
+    # "fedxgbcyclic",
     "qfedavg",
 ]
 
