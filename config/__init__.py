@@ -78,7 +78,7 @@ def _resolve_strategy_defaults() -> tuple[int, float]:
 DP_NUM_SAMPLED_CLIENTS, QFEDAVG_CLIENT_LEARNING_RATE = _resolve_strategy_defaults()
 
 # Runtime settings
-CLIENT_NUM_CPUS = 4.0
+CLIENT_NUM_CPUS = 2.0
 CLIENT_NUM_GPUS_IF_AVAILABLE = 0.1
 
 # XGBoost settings
