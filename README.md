@@ -82,18 +82,18 @@ federated-learning-extreme/
 │   └── IID-Round-200-Epoch-3/   # 歷史對比集
 │
 ├── [三站點資料流程]
-│   ├── res-drag-set-to-there----first-station/
+│   ├── res-draw-18-first/
 │   │   ├── move_outer.py
 │   │   ├── generator.py
 │   │   ├── check_strategies.py
 │   │   └── README.md            # ← First Station 說明
 │   │
-│   ├── res-happy-ending--------second-station/
+│   ├── res-draw-36-second/
 │   │   ├── move_outer.py        # 🆕 改為動態命名 + robocopy
 │   │   ├── generator.py
 │   │   └── README.md            # ← Second Station 說明
 │   │
-│   └── RESULT_Finally_fan_tasty/
+│   └── res-Finally/
 │       └── [最終結果歸檔]
 │
 ├── requirements.txt             # 依賴清單
