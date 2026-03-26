@@ -1,0 +1,11 @@
+======================================================================
+Experiment Results Summary
+======================================================================
+
+Stage: Stage01 ¡÷ Stage02
+Data Distribution: IID
+Rounds: 200
+Local Epochs: 3
+Run ID: 20260325-1916-22-FedAvg
+
+Generated Charts: 13

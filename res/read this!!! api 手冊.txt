@@ -1,6 +1,0 @@
-if 歷史遺留:
-    go to ./res/history/
-elif 有用:
-    rename to {timestamp}_{strategy_name}
-else:
-    待處理

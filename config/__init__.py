@@ -92,7 +92,7 @@ DRAW_SHOW_PLOT = True
 DRAW_FIGSIZE = (8.28, 4.49)
 
 # Run record settings
-RES_DIR = "res"
+RES_DIR = "raw_data"
 
 # File naming settings
 TIMESTAMP_FORMAT = "%Y%m%d-%H%M-%S"

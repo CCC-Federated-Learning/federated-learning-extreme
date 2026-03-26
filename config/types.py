@@ -25,10 +25,10 @@ class StrategyName(_ConfigEnum):
     FEDTRIMMEDAVG = "FedTrimmedAvg"
 
     # Differential Privacy Strategies
-    DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING = "DifferentialPrivacyClientSideAdaptiveClipping"
-    DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING = "DifferentialPrivacyClientSideFixedClipping"
-    DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING = "DifferentialPrivacyServerSideAdaptiveClipping"
-    DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING = "DifferentialPrivacyServerSideFixedClipping"
+    DIFFERENTIALPRIVACYCLIENTSIDEADAPTIVECLIPPING = "dp_client_adaptive"
+    DIFFERENTIALPRIVACYCLIENTSIDEFIXEDCLIPPING = "dp_client_fixed"
+    DIFFERENTIALPRIVACYSERVERSIDEADAPTIVECLIPPING = "dp_server_adaptive"
+    DIFFERENTIALPRIVACYSERVERSIDEFIXEDCLIPPING = "dp_server_fixed"
 
     # XGBoost specific strategies
     FEDXGBBAGGING = "FedXgbBagging"

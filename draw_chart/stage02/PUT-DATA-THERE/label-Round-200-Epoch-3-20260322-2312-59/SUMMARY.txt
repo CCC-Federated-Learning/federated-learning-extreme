@@ -1,0 +1,11 @@
+======================================================================
+Experiment Results Summary
+======================================================================
+
+Stage: Stage01 ¡÷ Stage02
+Data Distribution: label
+Rounds: 200
+Local Epochs: 3
+Run ID: 20260322-2312-59
+
+Generated Charts: 13

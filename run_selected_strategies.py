@@ -67,8 +67,8 @@ def update_strategy_in_config(config_path: Path, strategy_name: str) -> None:
 
 
 def _latest_res_dir(project_root: Path) -> Path | None:
-    """Return latest timestamped result directory under res/, if any."""
-    res_root = project_root / "res"
+    """Return latest timestamped result directory under raw_data/, if any."""
+    res_root = project_root / "raw_data"
     if not res_root.exists():
         return None
 
