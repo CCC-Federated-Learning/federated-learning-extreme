@@ -148,6 +148,7 @@ class IIDLabelComparator:
 		if not self.input_root.exists():
 			raise FileNotFoundError(f"Input root not found: {self.input_root}")
 
+		import json
 		batch_dirs = [d for d in sorted(self.input_root.iterdir()) if d.is_dir()]
 		for batch_dir in batch_dirs:
 			run_root = batch_dir / "PUT-DATA-THERE"
@@ -161,10 +162,8 @@ class IIDLabelComparator:
 				metrics_csv_path = run_dir / "run_metrics.csv"
 				metrics_json_path = run_dir / "run_metrics.json"
 				
-				# Check for either CSV or JSON
+				# Check metadata exists
 				if not metadata_path.exists():
-					continue
-				if not (metrics_csv_path.exists() or metrics_json_path.exists()):
 					continue
 
 				meta = parse_metadata(metadata_path)
@@ -178,18 +177,34 @@ class IIDLabelComparator:
 				if distribution not in {"iid", "label"}:
 					continue
 
-				# Load from CSV if exists, otherwise from JSON
-				if metrics_csv_path.exists():
-					df = pd.read_csv(metrics_csv_path)
-				else:
-					import json
-					with open(metrics_json_path, "r") as f:
-						json_data = json.load(f)
-						if isinstance(json_data, dict) and "rounds" in json_data:
-							json_data = json_data["rounds"]
-						df = pd.DataFrame(json_data)
+				# Try to load from CSV first, then JSON
+				# Use Windows long path prefix for paths >= 260 chars to bypass MAX_PATH limit
+				df = None
+				csv_abs = metrics_csv_path.absolute()
+				json_abs = metrics_json_path.absolute()
 				
-				if not {"round", "accuracy"}.issubset(df.columns):
+				# Apply Windows long path prefix when path is >= 260 chars
+				import sys
+				if sys.platform == "win32" and len(str(csv_abs)) >= 260:
+					csv_str = f"\\\\?\\{str(csv_abs)}"
+					json_str = f"\\\\?\\{str(json_abs)}"
+				else:
+					csv_str = str(csv_abs)
+					json_str = str(json_abs)
+				
+				try:
+					df = pd.read_csv(csv_str)
+				except (FileNotFoundError, OSError):
+					try:
+						with open(json_str, "r") as f:
+							json_data = json.load(f)
+							if isinstance(json_data, dict) and "rounds" in json_data:
+								json_data = json_data["rounds"]
+							df = pd.DataFrame(json_data)
+					except (FileNotFoundError, OSError, json.JSONDecodeError):
+						continue
+			
+				if df is None or not {"round", "accuracy"}.issubset(df.columns):
 					continue
 
 				current = self.data[distribution].get(strategy)

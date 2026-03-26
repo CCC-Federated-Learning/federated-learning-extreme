@@ -10,10 +10,10 @@ Robustness & Byzantine Fault Tolerance,MultiKrum,98.02,9.74,-88.28
 Robustness & Byzantine Fault Tolerance,Krum,98.14,9.8,-88.34
 Statistical Robustness Strategies,FedTrimmedAvg,99.00999999999999,22.759999999999998,-76.25
 Statistical Robustness Strategies,FedMedian,98.94,18.2,-80.74
-Differential Privacy Strategies,DifferentialPrivacyClientSideAdaptiveClipping,,,
-Differential Privacy Strategies,DifferentialPrivacyClientSideFixedClipping,,28.29,
-Differential Privacy Strategies,DifferentialPrivacyServerSideAdaptiveClipping,,,
-Differential Privacy Strategies,DifferentialPrivacyServerSideFixedClipping,,14.66,
+Differential Privacy Strategies,DifferentialPrivacyClientSideFixedClipping,75.61,28.29,-47.32
+Differential Privacy Strategies,DifferentialPrivacyClientSideAdaptiveClipping,77.60000000000001,17.810000000000002,-59.790000000000006
+Differential Privacy Strategies,DifferentialPrivacyServerSideAdaptiveClipping,84.27,24.16,-60.11
+Differential Privacy Strategies,DifferentialPrivacyServerSideFixedClipping,83.74000000000001,14.66,-69.08000000000001
 XGBoost Specific Strategies,FedXgbBagging,50.71,10.09,-40.620000000000005
 XGBoost Specific Strategies,FedXgbCyclic,82.78999999999999,9.8,-72.99
 Fairness & Weighted Optimization,QFedAvg,98.5,33.33,-65.17
