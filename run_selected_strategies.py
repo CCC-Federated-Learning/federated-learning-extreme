@@ -13,7 +13,7 @@ STRATEGIES_IN_ORDER = [
     # "fedadam",
     # "fedprox",
     # "fedyogi",
-    "bulyan",
+    # "bulyan",
     "krum",
     "multikrum",
     "fedmedian",
