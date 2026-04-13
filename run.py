@@ -70,7 +70,6 @@ def run_simulation() -> None:
 
     # === INITIALIZATION ===
     validate_config()
-    _check_dependencies()
     # Build once in main process to surface compatibility issues early
     # (instead of failing later inside the ServerApp background thread).
     build_strategy()
