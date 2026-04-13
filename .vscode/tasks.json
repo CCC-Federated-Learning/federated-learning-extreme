@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Federated Simulation",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"run.py"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}
