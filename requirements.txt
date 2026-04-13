@@ -1,6 +1,7 @@
 flwr[simulation]
-flwr-datasets
 torch
 torchvision
-ipywidgets
+numpy
 matplotlib
+xgboost
+ipywidgets

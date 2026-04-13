@@ -1,7 +1,6 @@
 # Python environment
 .venv/
 venv/
-venv311/
 
 # Python cache / build artifacts
 __pycache__/
@@ -13,22 +12,17 @@ __pycache__/
 # IDE settings
 .vscode/
 
-# Dataset and generated experiment outputs
-data/
+# All generated outputs (dataset, experiment runs, charts, models, pipeline output)
+results/
 
-# Trained model artifacts
-final_model.pt
-final_model_xgb.json
+# Jupyter checkpoints
+.ipynb_checkpoints/
 
 # Runtime / logs
 *.log
 *.tmp
 *.temp
 
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
 # OS files
 .DS_Store
 Thumbs.db
-
