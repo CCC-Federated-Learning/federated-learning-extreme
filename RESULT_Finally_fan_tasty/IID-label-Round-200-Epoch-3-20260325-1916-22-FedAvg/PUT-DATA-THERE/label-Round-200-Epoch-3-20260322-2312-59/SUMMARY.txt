@@ -1,0 +1,15 @@
+======================================================================
+EXPERIMENT RESULTS SUMMARY
+======================================================================
+
+Directory: label-Round-200-Epoch-3-20260322-2312-59
+
+Configuration:
+  Data Distribution: label
+  Training Rounds: 200
+  Local Epochs: 3
+  Run ID: 20260322-2312-59
+
+Contents:
+  - PUT-DATA-THERE/: Raw experimental data from all strategies
+  - generate_charts/: Generated comparison charts and visualizations

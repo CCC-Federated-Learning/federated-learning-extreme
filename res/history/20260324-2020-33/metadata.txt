@@ -1,0 +1,21 @@
+# Common
+run_id = 20260324-2020-33
+title = MNIST-IID-QFedAvg
+model_name = Net
+dataset_name = MNIST
+data_distribution = IID
+strategy = QFedAvg
+num_rounds = 10
+local_epochs = 1
+batch_size = 64
+learning_rate = 0.001
+fraction_train = 1.0
+fraction_evaluate = 1
+dirichlet_alpha = 0.5
+data_seed = 499
+num_partitions = 10
+elapsed_seconds = 114.40
+
+# StrategySpecific
+qfedavg_client_learning_rate = 0.001
+qfedavg_q = 0.0

@@ -1,0 +1,22 @@
+# Common
+run_id = 20260324-2134-46
+title = MNIST-IID-DifferentialPrivacyClientSideFixedClipping
+model_name = Net
+dataset_name = MNIST
+data_distribution = IID
+strategy = DifferentialPrivacyClientSideFixedClipping
+num_rounds = 20
+local_epochs = 1
+batch_size = 64
+learning_rate = 0.001
+fraction_train = 1.0
+fraction_evaluate = 1
+dirichlet_alpha = 0.5
+data_seed = 499
+num_partitions = 10
+elapsed_seconds = 193.40
+
+# StrategySpecific
+dp_clipping_norm = 1.0
+dp_noise_multiplier = 0.5
+dp_num_sampled_clients = 10
